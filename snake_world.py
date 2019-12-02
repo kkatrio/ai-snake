@@ -83,4 +83,7 @@ class Environment:
     def print_state(self):
         print('state: ', self.state)
 
+    def has_hit_wall(self, head_position):
+        i, j = head_position
+        return True if i < 0 or i >= self.numberOfCells or j < 0 or j >= self.numberOfCells else False
 

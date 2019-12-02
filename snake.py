@@ -17,26 +17,13 @@ class Agent():
     
     def _update_head_position(self, direction):
         if direction == Direction.UP:
-            if self.head_j < self.numberOfCells - 1: # to be replaced by hitting the wall
-                self.head_j = 0
-            else:
-                self.head_j += 1
+            self.head_j += 1
         if direction == Direction.LEFT:
-            if self.head_i <= self.numberOfCells - 1:
-                self.head_i = 0
-            else:
-                self.head_i += 1
+            self.head_i += 1
         if direction == Direction.DOWN:
-            if self.head_j >= self.numberOfCells - 1:
-                self.head_j = 0
-            else:
-                self.head_j += 1
+            self.head_j += 1
         if direction == Direction.RIGHT:
-            if self.head_i >= self.numberOfCells - 1:
-                self.head_i = 0
-            else:
-                self.head_i += 1
-
+            self.head_i += 1
 
     def move_head(self, direction):
         # calculates the new head position, appends it, returns the new

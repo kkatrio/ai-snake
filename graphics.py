@@ -24,6 +24,7 @@ class Game(tk.Tk):
         # todo: get information about initial state in a better way for both Env and Agent
         self.env = Environment(numberOfCells, self.canvas_size, startingPosition)
         self.snake = Agent(numberOfCells, startingPosition)
+        self.game_over = False
 
     def _init_canvas(self):
         self._canvas = tk.Canvas(self,
@@ -41,18 +42,26 @@ class Game(tk.Tk):
                 self._canvas.create_rectangle(p.x - 1, p.y - 1, p.x + 1, p.y + 1, fill='blue', outline='')
 
     def _update_contents(self):
+        # make body the previous head
         previous_head = self.snake.head
         self.env[previous_head] = CellType.BODY
+        
+        # move head by growing
         new_head_position = self.snake.move_head(2)
 
+        if self.env.has_hit_wall(new_head_position):
+            print('has hit wall')
+            self.game_over = True
+            return
+
+
+        # if we did not find food, erase the tail == undo the grow
         if self.env[new_head_position] is not CellType.FOOD:
             previous_tail = self.snake.tail
             self.snake.erase_tail() # we cound make it grow on a peek maybe
-            # update state
             self.env[previous_tail] = CellType.EMPTY
-        # todo: else last head must become body
 
-        #update env
+        # make head the new position
         self.env[new_head_position] = CellType.HEAD
         print("snake size: ", self.snake.size)
 
@@ -73,12 +82,11 @@ class Game(tk.Tk):
         self.render()
         
         def cb():
-            self._update_contents()
-            self.render()
+            if not self.game_over:
+                self._update_contents()
+                self.render()
             self.after(1000, cb)
         self.after(100, cb)
-
-
         self.mainloop()
 
 game = Game(800)
