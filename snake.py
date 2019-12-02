@@ -8,13 +8,13 @@ class Direction():
 
 
 class Agent():
-    def __init__(self, numberOfCells):
+    def __init__(self, numberOfCells, head_starting_position):
         self.numberOfCells = numberOfCells
-        self.head_i = 2
-        self.head_j = 2
+        self.head_i, self.head_j = head_starting_position # tuple
         self.stack = deque()
         # initialize head
         self.stack.append((self.head_i, self.head_j))
+        self.last_tail = None
     
     def _update_head_position(self, direction):
         if direction == Direction.UP:
@@ -45,9 +45,9 @@ class Agent():
         print("head_i, head_j: ", self.head_i, self.head_j)
         self.stack.append((self.head_i, self.head_j))
 
-        #erase tail - todo: erase when not food eaten
-        if len(self.stack) > 3:
+        if len(self.stack) > 3: # todo: when not eaten food
             # when we erase from the stack, we must repaint first too!
+            self.last_tail = self.stack[0] # save the tail just before we move for it
             self.stack.popleft()
         
 
@@ -57,10 +57,10 @@ class Agent():
         return self.stack[len(self.stack)-1]
     
     @property
-    def tail(self):
-        # returns position of the tail
+    def tail_previous(self):
+        # returns previous position of the tail
         #print('property returns tail', self.stack[0])
-        return self.stack[0]
+        return self.last_tail
 
     @property
     def size(self):
