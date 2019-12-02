@@ -40,35 +40,21 @@ class Game(tk.Tk):
                 p = Point(envMap[(i, j)].x, envMap[(i, j)].y)
                 self._canvas.create_rectangle(p.x - 1, p.y - 1, p.x + 1, p.y + 1, fill='blue', outline='')
 
-    def draw_head(self):
-        envMap = self.env.get_map # todo: maybe class can hold the map
-        head_position = self.snake.head
-        head = envMap[head_position]
-        self._canvas.create_rectangle(head.x, head.y, head.x + envMap.edge, head.y + envMap.edge, fill='black', outline='')
-       
-    def erase_tail(self):
-        envMap = self.env.get_map # todo: maybe class can hold the map
-        tail_position = self.snake.tail_previous
-        tail = envMap[tail_position]
-        self._canvas.create_rectangle(tail.x, tail.y, tail.x + envMap.edge, tail.y + envMap.edge, fill='white', outline='')
-
-    def _update_env_state(self):
-        # write on env's state
-        head_position = self.snake.head
-        self.env.state[head_position[0]][head_position[1]][0] = 1
-        self.env[head_position] = CellType.HEAD
-
-        try: # todo: replace with has_eaten flag
-            tail_position = self.snake.tail_previous
-            self.env.state[tail_position[0]][tail_position[1]][2] = 1 # empty
-            self.env[tail_position] = CellType.EMPTY
-        except:
-            pass
-
     def _update_contents(self):
-        self.snake.move(3) # move also saves the previous tail
-        print('stack len after move:', self.snake.size)
+        previous_head = self.snake.head
+        self.env[previous_head] = CellType.BODY
+        new_head_position = self.snake.move_head(2)
 
+        if self.env[new_head_position] is not CellType.FOOD:
+            previous_tail = self.snake.tail
+            self.snake.erase_tail() # we cound make it grow on a peek maybe
+            # update state
+            self.env[previous_tail] = CellType.EMPTY
+        # todo: else last head must become body
+
+        #update env
+        self.env[new_head_position] = CellType.HEAD
+        print("snake size: ", self.snake.size)
 
     def render(self):
         envMap = self.env.get_map #coords
@@ -78,18 +64,16 @@ class Game(tk.Tk):
             for j in range(envMap.size):
                 cell = envMap[(i, j)]
                 cellType = self.env[(i, j)]
-                print('cellType: ', cellType)
                 color = Colors.CELLTYPE[cellType]
                 self._canvas.create_rectangle(cell.x, cell.y, cell.x + envMap.edge, cell.y + envMap.edge, fill=color, outline='')
 
 
     def show(self):
-        self.draw_map_points()
+        #self.draw_map_points()
         self.render()
         
         def cb():
             self._update_contents()
-            self._update_env_state()
             self.render()
             self.after(1000, cb)
         self.after(100, cb)

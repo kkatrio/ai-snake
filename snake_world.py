@@ -44,7 +44,7 @@ class Environment:
         # state: for every cell: [head, body, empty, food]
         self.state_size = (self.numberOfCells, self.numberOfCells, 4)
 
-        self._cellType = np.empty((self.numberOfCells, self.numberOfCells))
+        self._cellType = np.empty((self.numberOfCells, self.numberOfCells), dtype=CellType)
 
         self.state = np.zeros(self.state_size, dtype=int) # todo: bool
         self.headPosition = head_position

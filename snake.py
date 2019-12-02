@@ -13,8 +13,7 @@ class Agent():
         self.head_i, self.head_j = head_starting_position # tuple
         self.stack = deque()
         # initialize head
-        self.stack.append((self.head_i, self.head_j))
-        self.last_tail = None
+        self.stack.append(head_starting_position)
     
     def _update_head_position(self, direction):
         if direction == Direction.UP:
@@ -39,28 +38,27 @@ class Agent():
                 self.head_i += 1
 
 
-    def move(self, direction):
-        #move head
+    def move_head(self, direction):
+        # calculates the new head position, appends it, returns the new
         self._update_head_position(direction)
         print("head_i, head_j: ", self.head_i, self.head_j)
         self.stack.append((self.head_i, self.head_j))
+        return (self.head_i, self.head_j)
 
-        if len(self.stack) > 3: # todo: when not eaten food
-            # when we erase from the stack, we must repaint first too!
-            self.last_tail = self.stack[0] # save the tail just before we move for it
-            self.stack.popleft()
+    def erase_tail(self):
+        self.stack.popleft()
         
 
     @property
     def head(self):
         # returns the position(index) of the top of the stack
+        # it must always be > 0
         return self.stack[len(self.stack)-1]
-    
+
     @property
-    def tail_previous(self):
-        # returns previous position of the tail
+    def tail(self):
         #print('property returns tail', self.stack[0])
-        return self.last_tail
+        return self.stack[0]
 
     @property
     def size(self):
