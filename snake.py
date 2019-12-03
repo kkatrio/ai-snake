@@ -17,9 +17,9 @@ class Agent():
     
     def _update_head_position(self, direction):
         if direction == Direction.UP:
-            self.head_j += 1
+            self.head_j -= 1
         if direction == Direction.LEFT:
-            self.head_i += 1
+            self.head_i -= 1
         if direction == Direction.DOWN:
             self.head_j += 1
         if direction == Direction.RIGHT:

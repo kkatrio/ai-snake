@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 class CellType:
     HEAD = 0
@@ -57,15 +58,11 @@ class Environment:
     def __setitem__(self, indices, cell_type):
         self._cellType[indices] = cell_type
 
-
-
     @property
     def get_map(self):
         return self.map
 
-
     def reset(self):
-
         # put empty cells
         self.state[:][:][2] = 1
         self._cellType[:][:] = CellType.EMPTY
@@ -80,10 +77,16 @@ class Environment:
         self.state[self.headPosition[0]][self.headPosition[1]][2] = 0
         self._cellType[self.headPosition[0]][self.headPosition[1]] = CellType.HEAD
 
-    def print_state(self):
-        print('state: ', self.state)
+    def regenerate_food(self):
+        ri = random.randrange(0, self.numberOfCells);
+        rj = random.randrange(0, self.numberOfCells);
+        self._cellType[ri, rj] = CellType.FOOD
 
     def has_hit_wall(self, head_position):
         i, j = head_position
         return True if i < 0 or i >= self.numberOfCells or j < 0 or j >= self.numberOfCells else False
+
+    def has_hit_own_body(self, head_position):
+        return self._cellType[head_position] == CellType.BODY
+
 
