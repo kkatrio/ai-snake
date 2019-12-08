@@ -8,13 +8,12 @@ class Direction():
 
 
 class Agent():
-    def __init__(self, numberOfCells, head_starting_position):
-        self.numberOfCells = numberOfCells
+    def __init__(self, head_starting_position):
         self.head_i, self.head_j = head_starting_position # tuple
         self.stack = deque()
         # initialize head
         self.stack.append(head_starting_position)
-    
+
     def _update_head_position(self, direction):
         if direction == Direction.UP:
             self.head_j -= 1
@@ -34,7 +33,7 @@ class Agent():
 
     def erase_tail(self):
         self.stack.popleft()
-        
+
 
     @property
     def head(self):
