@@ -1,7 +1,7 @@
 import time
 import tkinter as tk
 from snake_world import Environment, Point, CellType
-from snake import Agent, Direction
+from snake import Snake, Direction
 
 class Colors:
     CELLTYPE = {
@@ -18,7 +18,7 @@ class Game(tk.Tk):
         self.head_starting_position = head_starting_position # for reseting the env
 
         self.env = Environment(n_cells, self.canvas_size)
-        self.snake = Agent(head_starting_position)
+        self.snake = Snake(head_starting_position)
 
         # class can host graphics
 
@@ -54,6 +54,7 @@ class Game(tk.Tk):
                 self._canvas.create_rectangle(cell.x, cell.y, cell.x + envMap.edge, cell.y + envMap.edge, fill=color, outline='')
 
     def _update(self):
+        # here we must calculate the action form the direction and pass the action
         self.env.step(directions[self._direction_step], self.snake)
         self._direction_step += 1
         if self._direction_step == len(directions):

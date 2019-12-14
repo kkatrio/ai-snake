@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from snake import Snake, Directions
 
 class CellType:
     HEAD = 0
@@ -7,12 +8,19 @@ class CellType:
     EMPTY = 2
     FOOD = 3
 
-class Direction():
-    UP = 0
-    LEFT = 1
-    DOWN = 2
-    RIGHT = 3
+AllDirections = [Directions.NORTH, Directions.WEST, Directions.SOUTH, Directions.EAST]
+Direction_map = {
+        AllDirections[0]: 'NORTH',
+        AllDirections[1]: 'WEST',
+        AllDirections[2]: 'SOUTH',
+        AllDirections[3]: 'EAST'
+    }
 
+class Actions():
+    CONTINUE_FORWARD = 0
+    TURN_LEFT = 1
+    TURN_RIGHT = 2
+    action_size = 3
 
 class Point():
     def __init__(self, x, y):
@@ -21,7 +29,7 @@ class Point():
 
 class Map():
     def __init__(self, nCells, canvas_size):
-        self.numberOfCells = nCells
+        self.numberOfCells = nCells # in each axis
         self.numberOfPoints = self.numberOfCells + 1
         self.edge = canvas_size / self.numberOfCells
 
@@ -43,10 +51,12 @@ class Map():
 
 
 class Environment:
-    def __init__(self, nCells, wSize):
+    def __init__(self, nCells, worldSize):
         self.numberOfCells = nCells
-        self.world_size = wSize # pixels
-        self.map = Map(self.numberOfCells, self.world_size)
+        self.world_size = worldSize # pixels
+        #self.map = Map(self.numberOfCells, self.world_size) # needd only for visualization
+        self.snake = None
+        self.current_direction = None
 
         # the state really
         self._cellType = np.empty((self.numberOfCells, self.numberOfCells), dtype=CellType)
@@ -63,9 +73,9 @@ class Environment:
     def __setitem__(self, indices, cell_type):
         self._cellType[indices] = cell_type
 
-    @property
-    def get_map(self):
-        return self.map
+    #@property
+    #def get_map(self):
+    #    return self.map
 
     @property
     def state(self):
@@ -76,58 +86,82 @@ class Environment:
         return self._cellType.shape
     #must have property action size
 
-    def reset(self, head_position): # things needed here probably for food and body maybe
+    def reset(self, head_position, head_direction, food_position): # things needed here probably for food and body maybe
+
+        # setup the snake at its starting position
+        self.snake = Snake(head_position)
+        self.current_direction = head_direction
+        self.done = False
+
         # put empty cells
         self._cellType[:][:] = CellType.EMPTY
 
-        # food on (2,3)
-        self._cellType[2][3] = CellType.FOOD
+        food_i, food_j = food_position
+        self._cellType[food_i][food_j] = CellType.FOOD
 
         # put head
         self._cellType[head_position[0]][head_position[1]] = CellType.HEAD
-
         return self._cellType
 
-    def step(self, direction, snake):
+    def step(self, action):
         # make body the previous head
-        previous_head = snake.head
+        previous_head = self.snake.head
         self[previous_head] = CellType.BODY # updates env cells
 
+        self.current_direction = self.decide_way(action)
+        #print('action: ', action, 'decided direction: ', Direction_map[self.current_direction])
+
         # grow by moving the head
-        new_head_position = snake.move_head(direction)
+        new_head_position = self.snake.move_head(self.current_direction)
 
         if self.has_hit_wall(new_head_position):
-            print('has hit wall')
+            #print('---HAS HIT WALL---')
+            # maaybe we need to erase the tail here as well
             self.done = True
 
         elif self.has_hit_own_body(new_head_position):
-            print('has hit own body')
+            #print('---HAS HIT OWN BODY---')
             self.done = True
 
         # if we did not find food, erase the tail == grow back
         elif self[new_head_position] is not CellType.FOOD:
-            previous_tail = snake.tail
-            snake.erase_tail()
+            #print('did not find food, moving on')
+            previous_tail = self.snake.tail
+            self.snake.erase_tail()
             self[previous_tail] = CellType.EMPTY # updates env cells
             self[new_head_position] = CellType.HEAD # updates env cells
 
         # but if we found food, regenerate
         else:
+            #print('found food, regenerating')
             self.regenerate_food()
             self[new_head_position] = CellType.HEAD # updates env cells
+            #print('CELLTYPES: ')
+            #print(self._cellType)
 
         # make head the new position
-        self[new_head_position] = CellType.HEAD # updates env cells
-        print("snake size: ", snake.size)
+        #print("after doing a step, snake size: ", self.snake.size)
 
         # env has been updated, so we can return its state
         reward = 1
         return (self._cellType, reward, self.done)
 
+#AllDirections = [Directions.NORTH, Directions.WEST, Directions.SOUTH, Directions.EAST]
+
+    def decide_way(self, action):
+        dindex = AllDirections.index(self.current_direction)
+        #print('current direction : ', Direction_map[AllDirections[dindex]])
+        if action == Actions.TURN_LEFT:
+            return AllDirections[(dindex + 1) % 4]
+        elif action == Actions.TURN_RIGHT:
+            return AllDirections[dindex - 1]
+        elif action == Actions.CONTINUE_FORWARD:
+            return self.current_direction
+
     def regenerate_food(self):
         ri = random.randrange(0, self.numberOfCells);
         rj = random.randrange(0, self.numberOfCells);
-        self._cellType[ri, rj] = CellType.FOOD
+        self._cellType[ri][rj] = CellType.FOOD
 
     def has_hit_wall(self, head_position):
         i, j = head_position
