@@ -3,7 +3,7 @@ from dqnsnake import DQNAgent
 
 def train_snake():
 
-    numberOfCells = 6 # in each axis
+    numberOfCells = 5 # in each axis
     startingPosition = (1, 1)
     headDirection = 2 # SOUTH
     foodPosition = (2, 1)
@@ -16,7 +16,7 @@ def train_snake():
     #print('state_size: ', state_size, 'action_size: ', action_size)
     agent = DQNAgent(state_size=state_size, action_size=action_size, head_starting_position=startingPosition) # builds network
 
-    episodes = 50
+    episodes = 200
     maxsteps = 100
 
     for e in range(episodes):
@@ -33,7 +33,7 @@ def train_snake():
             #print("--------------")
             #print("step : ", t)
             #print("--------------")
-            
+
             action = agent.get_action(state)
 
             # step to the next state

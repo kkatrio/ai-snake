@@ -13,14 +13,46 @@ class DQNAgent():
         self.action_size = action_size
 
         self.experience = deque(maxlen=2000)
+        self.frames = None
+        self.numberOfChannels = 4
 
         self.gamma = 0.99
         self.learning_rate = 0.001
-        self.batch_size = 32
+        self.batch_size = 64
         self.epsilon = 1
         self.decay_epsilon = 0.999
+        self.start_train = 100
         self.model = self.build_network()
 
+
+    def build_network(self):
+        model = tf.keras.Sequential()
+        model.add(layers.Conv2D(
+            16,
+            kernel_size=(3, 3),
+            strides=(1, 1),
+            input_shape = self.state_size + (self.numberOfChannels, )
+        ))
+        model.add(layers.Activation('relu'))
+        model.add(layers.Conv2D(
+            32,
+            kernel_size=(3, 3),
+            strides=(1, 1)
+        ))
+        model.add(layers.Activation('relu'))
+
+        # Dense layers.
+        model.add(layers.Flatten())
+        model.add(layers.Dense(256))
+        model.add(layers.Activation('relu'))
+        model.add(layers.Dense(self.action_size))
+
+        model.summary()
+        model.compile(tf.keras.optimizers.RMSprop(), 'MSE')
+        return model
+
+
+    '''
     def build_network(self):
         model = tf.keras.Sequential()
         model.add(layers.Flatten(input_shape=self.state_size))
@@ -30,9 +62,26 @@ class DQNAgent():
         model.summary()
         model.compile(optimizer=tf.keras.optimizers.Adam(self.learning_rate), loss='mse')
         return model
+    '''
+
+    def get_channels(self, frame):
+        if self.frames is None:
+            self.frames = deque([frame] * self.numberOfChannels)
+        else:
+            self.frames.append(frame)
+            self.frames.popleft()
+
+        ar = np.array(self.frames, dtype=float) # (H, W, C)
+        hwc = np.rollaxis(ar, 0, 3)
+        #print('nhwc shape: ', hwc.shape)
+        return hwc
 
     def store_transition(self, state, action, reward, next_state, done):
-        self.experience.append((state, action, reward, next_state, done))
+        # todo: flatten before storing - save memory?
+
+        full_state = self.get_channels(state)
+        full_next_state = self.get_channels(next_state)
+        self.experience.append((full_state, action, reward, full_next_state, done))
         # decay epsilon
 
         if self.epsilon > 0.01:# naaah not here
@@ -42,29 +91,36 @@ class DQNAgent():
         if(np.random.rand() < self.epsilon):
             return random.randrange(self.action_size)
         # else get action for this state
-        S3d = np.expand_dims((S.astype(float)), 0)
-        q_function = self.model.predict(S3d) # q-value function for both actions
+
+        full_state = self.get_channels(S)
+        full_state = np.expand_dims(full_state, 0) # make it 4d : (1,C,H,W)
+        #S3d = np.expand_dims((S.astype(float)), 0)
+        q_function = self.model.predict(full_state) # q-value function for both actions
         #print('q_function in get_action: ', q_function)
         return np.argmax(q_function[0])
 
     def train(self):
-        # get batch
+        if len(self.experience) < self.start_train:
+            return
+
         batch_size = min(len(self.experience), self.batch_size)
+        #batch_size = self.batch_size
         #print('batch_size: ', batch_size)
         batch = random.sample(self.experience, batch_size)
 
         rewards, actions, dones = [], [], []
-        states_size = (batch_size, ) + self.state_size
-        states = np.zeros(states_size) # (1, 2, 2)
+
+        states_size = (batch_size, )  + self.state_size + (self.numberOfChannels, )
+        states = np.zeros(states_size) # (HWC)
         next_states = np.zeros(states_size)
 
         for i in range(batch_size):
-            assert batch[i][0].shape == states[i].shape #implicit conversion to float from int
-            states[i] = batch[i][0]
+            assert batch[i][0].shape == states[i].shape
+            states[i] = batch[i][0] #implicit conversion to float from int
 
             actions.append(batch[i][1])
             rewards.append(batch[i][2])
-            
+
             assert batch[i][3].shape == next_states[i].shape
             next_states[i] = batch[i][3]
 
@@ -79,7 +135,7 @@ class DQNAgent():
         #print('dones: ', dones)
         #print('states: ', states)
 
-        Q_function = self.model.predict(states) # states shape: (batch_size, action_size) 
+        Q_function = self.model.predict(states) # states shape: (batch_size, action_size)
         #print('Q_function size: ', Q_function.shape)
         #print('Q_function: ', Q_function)
 
@@ -92,7 +148,7 @@ class DQNAgent():
             else:
                 target = rewards[i] + self.gamma * np.amax(Q_function_next_state[i]) # we take the action for which Q is max
             #print("target: ", target)
-            Q_function[i][actions[i]] = target # overwrite all row??? not OK 
+            Q_function[i][actions[i]] = target # overwrite all row??? not OK
             #print('Q_function: ', Q_function)
 
             # Q <- Q + a(target - Q)
