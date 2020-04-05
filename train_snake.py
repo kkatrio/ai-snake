@@ -3,8 +3,8 @@ from dqnsnake import DQNAgent
 
 def train_snake():
 
-    numberOfCells = 5 # in each axis
-    startingPosition = (1, 1)
+    numberOfCells = 8 # in each axis
+    startingPosition = (3, 3)
     headDirection = 2 # SOUTH
     foodPosition = (2, 1)
 
@@ -16,8 +16,9 @@ def train_snake():
     #print('state_size: ', state_size, 'action_size: ', action_size)
     agent = DQNAgent(state_size=state_size, action_size=action_size, head_starting_position=startingPosition) # builds network
 
-    episodes = 200
-    maxsteps = 100
+    episodes = 30000
+    maxsteps = 500
+    decay = 0.9 / episodes * 2
 
     for e in range(episodes):
 
@@ -26,6 +27,7 @@ def train_snake():
         #print("--------------")
         state = env.reset(startingPosition, headDirection, foodPosition)
         #print('state shape: ', state.shape)
+        #print('state array: ', state)
         #state = np.reshape(state, [1, state_size])
 
         for t in range(maxsteps):
@@ -53,15 +55,22 @@ def train_snake():
 
             state = next_state
 
+
             if done:
-                print('episode:', e, 'done in', t, 'steps', ' experience length:', len(agent.experience), " epsilon:", agent.epsilon)
+
+                if agent.epsilon > 0.01:
+                    agent.epsilon -= decay
+
+                #print('episode:', e, 'done in', t, 'steps', ' experience length:', len(agent.experience), " epsilon:", agent.epsilon)
+                print('episode: {:5d} steps: {:3d} epsilon: {:.5f}'.format(e, t, agent.epsilon))
                 #print(' ')
                 #steps.append(t)
                 break
 
             if t is maxsteps - 1:
                 print('maxsteps reached!')
-                print('episode:', e, 'reached in', t, 'steps', ' experience length:', len(agent.experience), " epsilon:", agent.epsilon)
+                #print('episode:', e, 'reached in', t, 'steps', ' experience length:', len(agent.experience), " epsilon:", agent.epsilon)
+                print('episode: {:5d} steps: {:3d} epsilon: {:.5f}'.format(e, t, agent.epsilon))
                 #print(' ')
                 #steps.append(t)
 

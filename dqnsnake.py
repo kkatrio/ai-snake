@@ -20,7 +20,6 @@ class DQNAgent():
         self.learning_rate = 0.001
         self.batch_size = 64
         self.epsilon = 1
-        self.decay_epsilon = 0.999
         self.start_train = 100
         self.model = self.build_network()
 
@@ -71,10 +70,12 @@ class DQNAgent():
             self.frames.append(frame)
             self.frames.popleft()
 
-        ar = np.array(self.frames, dtype=float) # (H, W, C)
-        hwc = np.rollaxis(ar, 0, 3)
-        #print('nhwc shape: ', hwc.shape)
-        return hwc
+        #print('frames: ', self.frames)
+        #ar = np.array(self.frames, dtype=float) # (H, W, C)
+        #hwc = np.rollaxis(np.array(self.frames, dtype=float), 0, 3)
+        #print('nhwc-rolledaxis shape: ', hwc.shape)
+        #print('nhwc-rolledaxis: ', hwc)
+        return np.rollaxis(np.array(self.frames, dtype=float), 0, 3)
 
     def store_transition(self, state, action, reward, next_state, done):
         # todo: flatten before storing - save memory?
@@ -82,10 +83,6 @@ class DQNAgent():
         full_state = self.get_channels(state)
         full_next_state = self.get_channels(next_state)
         self.experience.append((full_state, action, reward, full_next_state, done))
-        # decay epsilon
-
-        if self.epsilon > 0.01:# naaah not here
-            self.epsilon *= self.decay_epsilon
 
     def get_action(self, S):
         if(np.random.rand() < self.epsilon):
@@ -93,9 +90,10 @@ class DQNAgent():
         # else get action for this state
 
         full_state = self.get_channels(S)
-        full_state = np.expand_dims(full_state, 0) # make it 4d : (1,C,H,W)
+        full_state = np.expand_dims(full_state, 0) # make it 4d : (1,H,W,C)
+        #print('full_state after expansion: ', full_state)
         #S3d = np.expand_dims((S.astype(float)), 0)
-        q_function = self.model.predict(full_state) # q-value function for both actions
+        q_function = self.model.predict(full_state) # q-value function
         #print('q_function in get_action: ', q_function)
         return np.argmax(q_function[0])
 
@@ -111,24 +109,24 @@ class DQNAgent():
         rewards, actions, dones = [], [], []
 
         states_size = (batch_size, )  + self.state_size + (self.numberOfChannels, )
-        states = np.zeros(states_size) # (HWC)
+        states = np.zeros(states_size) # (NHWC)
         next_states = np.zeros(states_size)
 
         for i in range(batch_size):
-            assert batch[i][0].shape == states[i].shape
+            #assert batch[i][0].shape == states[i].shape
             states[i] = batch[i][0] #implicit conversion to float from int
 
             actions.append(batch[i][1])
             rewards.append(batch[i][2])
 
-            assert batch[i][3].shape == next_states[i].shape
+            #assert batch[i][3].shape == next_states[i].shape
             next_states[i] = batch[i][3]
 
             dones.append(batch[i][4])
 
-        assert len(rewards) == batch_size
-        assert len(actions) == batch_size
-        assert len(dones) == batch_size
+        #assert len(rewards) == batch_size
+        #assert len(actions) == batch_size
+        #assert len(dones) == batch_size
 
         #print('rewards: ', rewards)
         #print('actions: ', actions)
@@ -148,12 +146,15 @@ class DQNAgent():
             else:
                 target = rewards[i] + self.gamma * np.amax(Q_function_next_state[i]) # we take the action for which Q is max
             #print("target: ", target)
-            Q_function[i][actions[i]] = target # overwrite all row??? not OK
+            #print('actions[i]: ', actions[i])
+            # actions contains the action to take (0, 1, or 2) for each sample
+            Q_function[i][actions[i]] = target
             #print('Q_function: ', Q_function)
 
             # Q <- Q + a(target - Q)
             # from the prediction we take the action tha maximizes the q_function
-            self.model.fit(states, Q_function, batch_size=self.batch_size, epochs=1, verbose=0)
+            #self.model.fit(states, Q_function, batch_size=self.batch_size, epochs=1, verbose=0)
             # todo: test with train_on_batch
-            #self.model.train_on_batch(states, Q_function)
+
+        self.model.train_on_batch(states, Q_function)
 

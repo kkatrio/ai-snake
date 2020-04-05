@@ -54,7 +54,7 @@ class Game(tk.Tk):
                 self._canvas.create_rectangle(cell.x, cell.y, cell.x + envMap.edge, cell.y + envMap.edge, fill=color, outline='')
 
     def _update(self):
-        # here we must calculate the action form the direction and pass the action
+        # here we must calculate the action from the direction and pass the action
         self.env.step(directions[self._direction_step], self.snake)
         self._direction_step += 1
         if self._direction_step == len(directions):

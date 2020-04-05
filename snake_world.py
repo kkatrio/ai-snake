@@ -54,7 +54,7 @@ class Environment:
     def __init__(self, nCells, worldSize):
         self.numberOfCells = nCells
         self.world_size = worldSize # pixels
-        #self.map = Map(self.numberOfCells, self.world_size) # needd only for visualization
+        #self.map = Map(self.numberOfCells, self.world_size) # needed only for visualization
         self.snake = None
         self.current_direction = None
 
@@ -102,6 +102,7 @@ class Environment:
         # put head
         self._cellType[head_position[0]][head_position[1]] = CellType.HEAD
         return self._cellType
+        # todo: _cellType maybe should be called cellState
 
     def step(self, action):
         # make body the previous head
