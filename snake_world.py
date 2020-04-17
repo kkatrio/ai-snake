@@ -60,8 +60,7 @@ class Environment:
 
         # the state really
         self._cellType = np.empty((self.numberOfCells, self.numberOfCells), dtype=CellType)
-
-        # env must be reset before used, ok? - otherwise the cells are empty - shape is ok though
+        # env must be reset before used - otherwise the cells are empty - shape is ok though
 
         self.done = False
         # must have action space = Direction
@@ -86,10 +85,10 @@ class Environment:
         return self._cellType.shape
     #must have property action size
 
-    def reset(self, head_position, head_direction, food_position): # things needed here probably for food and body maybe
+    def reset(self, head_position, head_direction, food_position): # things needed here : body
 
         # setup the snake at its starting position
-        self.snake = Snake(head_position)
+        self.snake = Snake(head_position) # initializing a snake here?
         self.current_direction = head_direction
         self.done = False
 
@@ -103,6 +102,11 @@ class Environment:
         self._cellType[head_position[0]][head_position[1]] = CellType.HEAD
         return self._cellType
         # todo: _cellType maybe should be called cellState
+
+        # quick & dirty body setup
+        self._cellType[4][4] = CellType.BODY
+        self._cellType[4][5] = CellType.BODY
+
 
     def step(self, action):
         # make body the previous head

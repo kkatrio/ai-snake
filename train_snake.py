@@ -3,9 +3,9 @@ from dqnsnake import DQNAgent
 
 def train_snake():
 
-    numberOfCells = 8 # in each axis
-    startingPosition = (3, 3)
-    headDirection = 2 # SOUTH
+    numberOfCells = 9 # in each axis
+    startingPosition = (4, 3)
+    headDirection = 0 # NORTH
     foodPosition = (2, 1)
 
     #worldSize = 800 # only for visualization
@@ -16,8 +16,8 @@ def train_snake():
     #print('state_size: ', state_size, 'action_size: ', action_size)
     agent = DQNAgent(state_size=state_size, action_size=action_size, head_starting_position=startingPosition) # builds network
 
-    episodes = 30000
-    maxsteps = 500
+    episodes = 1
+    maxsteps = 500 # todo: use while
     decay = 0.9 / episodes * 2
 
     for e in range(episodes):
@@ -36,6 +36,7 @@ def train_snake():
             #print("step : ", t)
             #print("--------------")
 
+            # state in this level is just a 2D array
             action = agent.get_action(state)
 
             # step to the next state

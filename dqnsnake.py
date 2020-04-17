@@ -30,6 +30,7 @@ class DQNAgent():
             16,
             kernel_size=(3, 3),
             strides=(1, 1),
+            # channels last
             input_shape = self.state_size + (self.numberOfChannels, )
         ))
         model.add(layers.Activation('relu'))
