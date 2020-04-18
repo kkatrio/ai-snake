@@ -3,18 +3,13 @@ import random
 from snake import Snake, Directions
 
 class CellType:
-    HEAD = 0
-    BODY = 1
-    EMPTY = 2
-    FOOD = 3
+    HEAD = 2
+    BODY = 3
+    EMPTY = 0
+    FOOD = 1
+    WALL = 4
 
 AllDirections = [Directions.NORTH, Directions.WEST, Directions.SOUTH, Directions.EAST]
-Direction_map = {
-        AllDirections[0]: 'NORTH',
-        AllDirections[1]: 'WEST',
-        AllDirections[2]: 'SOUTH',
-        AllDirections[3]: 'EAST'
-    }
 
 class Actions():
     CONTINUE_FORWARD = 0
@@ -66,8 +61,7 @@ class Environment:
         # must have action space = Direction
 
     def __getitem__(self, indices):
-        i, j = indices
-        return self._cellType[(i, j)]
+        return self._cellType[indices]
 
     def __setitem__(self, indices, cell_type):
         self._cellType[indices] = cell_type
@@ -88,74 +82,80 @@ class Environment:
     def reset(self, head_position, head_direction, food_position): # things needed here : body
 
         # setup the snake at its starting position
-        self.snake = Snake(head_position) # initializing a snake here?
+        self.snake = Snake(head_position) # initializing a snake here? sure
         self.current_direction = head_direction
         self.done = False
 
         # put empty cells
-        self._cellType[:][:] = CellType.EMPTY
+        self._cellType[:] = CellType.EMPTY
 
         food_i, food_j = food_position
-        self._cellType[food_i][food_j] = CellType.FOOD
+        self._cellType[food_i, food_j] = CellType.FOOD
+
+        # quick & dirty body setup
+        self._cellType[5, 4] = CellType.BODY
+        self._cellType[6, 4] = CellType.BODY
+        # don't forget to put the body onto the actual snake too
+        self.snake.append_body((5, 4))
+        tail = self.snake.tail
+        print('appending body in reset - tail: ', tail)
+        self.snake.append_body((6, 4))
+        tail = self.snake.tail
+        print('appending body in reset - tail: ', tail)
+
+        # quickly put the walls
+        self._cellType[[0, -1], :] = CellType.WALL
+        self._cellType[:, [0, -1]] = CellType.WALL
 
         # put head
-        self._cellType[head_position[0]][head_position[1]] = CellType.HEAD
+        self._cellType[head_position[0], head_position[1]] = CellType.HEAD
         return self._cellType
         # todo: _cellType maybe should be called cellState
 
-        # quick & dirty body setup
-        self._cellType[4][4] = CellType.BODY
-        self._cellType[4][5] = CellType.BODY
-
 
     def step(self, action):
-        # make body the previous head
+
+        # before we make a turn and move the head, we save the current cell position:
+        # we will need it if we will not die
         previous_head = self.snake.head
-        self[previous_head] = CellType.BODY # updates env cells
 
-        self.current_direction = self.decide_way(action)
-        #print('action: ', action, 'decided direction: ', Direction_map[self.current_direction])
+        #print('current direction: ', self.current_direction)
+        self.current_direction = self.turn(action)
+        #print('new direction: ', self.current_direction)
+        new_head_position = self.snake.move_head(self.current_direction) # just appends a new cell to the snake stack, i.e. grows its length
 
-        # grow by moving the head
-        new_head_position = self.snake.move_head(self.current_direction)
-
-        if self.has_hit_wall(new_head_position):
-            #print('---HAS HIT WALL---')
-            # maaybe we need to erase the tail here as well
+        if self.has_hit_wall(new_head_position) or self.has_hit_own_body(new_head_position):
+            # do we need to kiil the new head? length is increased
             self.done = True
+            reward = -1
+            #print('died -- returning')
+            return (self._cellType, reward, self.done)
 
-        elif self.has_hit_own_body(new_head_position):
-            #print('---HAS HIT OWN BODY---')
-            self.done = True
-
-        # if we did not find food, erase the tail == grow back
-        elif self[new_head_position] is not CellType.FOOD:
-            #print('did not find food, moving on')
+        # if we did not find food:
+        if self[new_head_position] is CellType.EMPTY:
+            # erase tail - snake moves
             previous_tail = self.snake.tail
             self.snake.erase_tail()
-            self[previous_tail] = CellType.EMPTY # updates env cells
-            self[new_head_position] = CellType.HEAD # updates env cells
+            self[previous_tail] = CellType.EMPTY
+            reward = 0
 
-        # but if we found food, regenerate
-        else:
-            #print('found food, regenerating')
+        elif self[new_head_position] is CellType.FOOD:
+            #print('found FOOD, regenerating')
             self.regenerate_food()
-            self[new_head_position] = CellType.HEAD # updates env cells
-            #print('CELLTYPES: ')
-            #print(self._cellType)
+            reward = 1 * self.snake.size
 
-        # make head the new position
-        #print("after doing a step, snake size: ", self.snake.size)
+        else:
+            print('Something is wrong when taking a step, what happened?')
+            assert(False)
 
-        # env has been updated, so we can return its state
-        reward = 1
+        # update the state for head and body
+        self[previous_head] = CellType.BODY
+        self[new_head_position] = CellType.HEAD # only after we have checked for empty space or food
+        assert(self.done is False)
         return (self._cellType, reward, self.done)
 
-#AllDirections = [Directions.NORTH, Directions.WEST, Directions.SOUTH, Directions.EAST]
-
-    def decide_way(self, action):
+    def turn(self, action):
         dindex = AllDirections.index(self.current_direction)
-        #print('current direction : ', Direction_map[AllDirections[dindex]])
         if action == Actions.TURN_LEFT:
             return AllDirections[(dindex + 1) % 4]
         elif action == Actions.TURN_RIGHT:
@@ -169,8 +169,7 @@ class Environment:
         self._cellType[ri][rj] = CellType.FOOD
 
     def has_hit_wall(self, head_position):
-        i, j = head_position
-        return True if i < 0 or i >= self.numberOfCells or j < 0 or j >= self.numberOfCells else False
+        return True if self._cellType[head_position] == CellType.WALL else False
 
     def has_hit_own_body(self, head_position):
         return self._cellType[head_position] == CellType.BODY

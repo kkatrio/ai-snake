@@ -86,8 +86,8 @@ class DQNAgent():
         self.experience.append((full_state, action, reward, full_next_state, done))
 
     def get_action(self, S):
-        if(np.random.rand() < self.epsilon):
-            return random.randrange(self.action_size)
+        #if(np.random.rand() < self.epsilon):
+        #    return random.randrange(self.action_size)
         # else get action for this state
 
         full_state = self.get_channels(S)
@@ -95,7 +95,7 @@ class DQNAgent():
         #print('full_state after expansion: ', full_state)
         #S3d = np.expand_dims((S.astype(float)), 0)
         q_function = self.model.predict(full_state) # q-value function
-        #print('q_function in get_action: ', q_function)
+        print('q_function in get_action: ', q_function)
         return np.argmax(q_function[0])
 
     def train(self):

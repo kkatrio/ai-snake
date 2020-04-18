@@ -3,8 +3,8 @@ from dqnsnake import DQNAgent
 
 def train_snake():
 
-    numberOfCells = 9 # in each axis
-    startingPosition = (4, 3)
+    numberOfCells = 10 # in each axis
+    startingPosition = (4, 4) # head
     headDirection = 0 # NORTH
     foodPosition = (2, 1)
 
@@ -17,7 +17,7 @@ def train_snake():
     agent = DQNAgent(state_size=state_size, action_size=action_size, head_starting_position=startingPosition) # builds network
 
     episodes = 1
-    maxsteps = 500 # todo: use while
+    maxsteps = 1000 # todo: use while
     decay = 0.9 / episodes * 2
 
     for e in range(episodes):
@@ -27,7 +27,7 @@ def train_snake():
         #print("--------------")
         state = env.reset(startingPosition, headDirection, foodPosition)
         #print('state shape: ', state.shape)
-        #print('state array: ', state)
+        print('state array reset: \n', state)
         #state = np.reshape(state, [1, state_size])
 
         for t in range(maxsteps):
@@ -39,23 +39,21 @@ def train_snake():
             # state in this level is just a 2D array
             action = agent.get_action(state)
 
+            print("step : ", t ,'action: ', action)
+
             # step to the next state
             next_state, reward, done = env.step(action)
 
-            # calculate reward from this step
-            reward = reward if not done else -100
-            #rewards.append(reward)
-
-            #next_state = np.reshape(next_state, [1, state_size])
+            print('next state array after step: \n', next_state)
+            print('reward returned: ', reward)
 
             # save S,A,R,S' to experience
             agent.store_transition(state, action, reward, next_state, done)
 
-            # use alternative policy to train model
+            # use alternative policy to train model - rely on experience only
             agent.train()
 
             state = next_state
-
 
             if done:
 

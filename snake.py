@@ -8,20 +8,22 @@ class Directions():
 
 class Snake():
     def __init__(self, head_starting_position):
-        self.head_i, self.head_j = head_starting_position # tuple
+        self.head_i, self.head_j = head_starting_position
         self.stack = deque()
         # initialize head
         self.stack.append(head_starting_position)
 
     def _update_head_position(self, direction):
+        # j is the second index in the array state -> move horizontaly
+        # i is the first -> move vertically
         if direction == Directions.NORTH:
-            self.head_j -= 1
-        if direction == Directions.WEST:
             self.head_i -= 1
+        if direction == Directions.WEST:
+            self.head_j -= 1
         if direction == Directions.SOUTH:
-            self.head_j += 1
-        if direction == Directions.EAST:
             self.head_i += 1
+        if direction == Directions.EAST:
+            self.head_j += 1
 
     def move_head(self, direction):
         # calculates the new head position, appends it, returns the new
@@ -30,9 +32,11 @@ class Snake():
         self.stack.append((self.head_i, self.head_j))
         return (self.head_i, self.head_j)
 
+    def append_body(self, body_position):
+        self.stack.appendleft(body_position)
+
     def erase_tail(self):
         self.stack.popleft()
-
 
     @property
     def head(self):
