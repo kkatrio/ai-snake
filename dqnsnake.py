@@ -71,29 +71,20 @@ class DQNAgent():
             self.frames.append(frame)
             self.frames.popleft()
 
-        #print('frames: ', self.frames)
-        #ar = np.array(self.frames, dtype=float) # (H, W, C)
-        #hwc = np.rollaxis(np.array(self.frames, dtype=float), 0, 3)
-        #print('nhwc-rolledaxis shape: ', hwc.shape)
-        #print('nhwc-rolledaxis: ', hwc)
-        return np.rollaxis(np.array(self.frames, dtype=float), 0, 3)
+        full_state = np.expand_dims(self.frames, 0) # make it 4d : (1,H,W,C)
+        return np.rollaxis(full_state, 1, 4)
 
     def store_transition(self, state, action, reward, next_state, done):
         # todo: flatten before storing - save memory?
 
-        full_state = self.get_channels(state)
-        full_next_state = self.get_channels(next_state)
-        self.experience.append((full_state, action, reward, full_next_state, done))
+        # state and next_state here are (1,H,W,C)
+        self.experience.append((state, action, reward, next_state, done))
 
-    def get_action(self, S):
+    def get_action(self, state):
         #if(np.random.rand() < self.epsilon):
         #    return random.randrange(self.action_size)
-        # else get action for this state
 
-        full_state = self.get_channels(S) # todo: maybe store it as (1,H,W,C), so as to avoid these steps
-        full_state = np.expand_dims(full_state, 0) # make it 4d : (1,H,W,C)
-        #print('full_state after expansion: ', full_state)
-        q_function = self.model.predict(full_state) # q-value function
+        q_function = self.model.predict(state) # q-value function
         print('q_function in get_action: ', q_function)
         return np.argmax(q_function[0])
 

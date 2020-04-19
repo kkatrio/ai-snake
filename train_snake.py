@@ -11,7 +11,7 @@ def train_snake():
     #worldSize = 800 # only for visualization
 
     env = Environment(numberOfCells, worldSize=0)
-    state_size = env.state_size #(numberOfCells x numberOfCells)
+    state_size = env.state_size #(numberOfCells x numberOfCells) # todo: not great that the state size is taken form the environment. It should be given somewhat more generically to the agent and the env.
     action_size = Actions.action_size # 3
     #print('state_size: ', state_size, 'action_size: ', action_size)
     agent = DQNAgent(state_size=state_size, action_size=action_size, head_starting_position=startingPosition) # builds network
@@ -22,38 +22,40 @@ def train_snake():
 
     for e in range(episodes):
 
-        #print("--------------")
-        #print("episode: ", e)
-        #print("--------------")
         state = env.reset(startingPosition, headDirection, foodPosition)
-        #print('state shape: ', state.shape)
-        print('state array reset: \n', state)
-        #state = np.reshape(state, [1, state_size])
+        #print('state array reset: \n', state)
+
+        state = agent.get_channels(state)
+
+        print('state before predict: ', state)
+        print('dtype: ', state.dtype)
 
         for t in range(maxsteps):
-
-            #print("--------------")
-            #print("step : ", t)
-            #print("--------------")
 
             # state in this level is just a 2D array
             action = agent.get_action(state)
 
-            print("step : ", t ,'action: ', action)
+            print("step : ", t, 'action: ', action)
 
             # step to the next state
             next_state, reward, done = env.step(action)
 
             print('next state array after step: \n', next_state)
+
+            #print('next state array after step: \n', next_state)
             print('reward returned: ', reward)
 
+            # we store the next_state in (1,H,W,C)
+            full_next_state = agent.get_channels(next_state)
+            assert(full_next_state.shape == (1, numberOfCells, numberOfCells, agent.numberOfChannels))
+
             # save S,A,R,S' to experience
-            agent.store_transition(state, action, reward, next_state, done)
+            agent.store_transition(state, action, reward, full_next_state, done)
 
             # use alternative policy to train model - rely on experience only
-            agent.train()
+            #agent.train()
 
-            state = next_state
+            state = full_next_state
 
             if done:
 

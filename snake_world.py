@@ -2,7 +2,7 @@ import numpy as np
 import random
 from snake import Snake, Directions
 
-class CellType:
+class CellType():
     HEAD = 2
     BODY = 3
     EMPTY = 0
@@ -28,7 +28,7 @@ class Map():
         self.numberOfPoints = self.numberOfCells + 1
         self.edge = canvas_size / self.numberOfCells
 
-        self.map = np.empty((self.numberOfPoints, self.numberOfPoints), dtype = Point)
+        self.map = np.empty((self.numberOfPoints, self.numberOfPoints), dtype=Point)
         self.create_coords()
 
     def create_coords(self):
@@ -54,7 +54,7 @@ class Environment:
         self.current_direction = None
 
         # the state really
-        self._cellType = np.empty((self.numberOfCells, self.numberOfCells), dtype=CellType)
+        self._cellType = np.empty([self.numberOfCells, self.numberOfCells], dtype=int)
         # env must be reset before used - otherwise the cells are empty - shape is ok though
 
         self.done = False
@@ -98,10 +98,8 @@ class Environment:
         # don't forget to put the body onto the actual snake too
         self.snake.append_body((5, 4))
         tail = self.snake.tail
-        print('appending body in reset - tail: ', tail)
         self.snake.append_body((6, 4))
         tail = self.snake.tail
-        print('appending body in reset - tail: ', tail)
 
         # quickly put the walls
         self._cellType[[0, -1], :] = CellType.WALL
@@ -128,19 +126,19 @@ class Environment:
             # do we need to kiil the new head? length is increased
             self.done = True
             reward = -1
-            #print('died -- returning')
+            print('DIED')
             return (self._cellType, reward, self.done)
 
         # if we did not find food:
-        if self[new_head_position] is CellType.EMPTY:
+        if self[new_head_position] == CellType.EMPTY:
             # erase tail - snake moves
             previous_tail = self.snake.tail
             self.snake.erase_tail()
             self[previous_tail] = CellType.EMPTY
             reward = 0
 
-        elif self[new_head_position] is CellType.FOOD:
-            #print('found FOOD, regenerating')
+        elif self[new_head_position] == CellType.FOOD:
+            print('found FOOD!')
             self.regenerate_food()
             reward = 1 * self.snake.size
 
