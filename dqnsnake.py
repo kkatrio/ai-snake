@@ -90,10 +90,9 @@ class DQNAgent():
         #    return random.randrange(self.action_size)
         # else get action for this state
 
-        full_state = self.get_channels(S)
+        full_state = self.get_channels(S) # todo: maybe store it as (1,H,W,C), so as to avoid these steps
         full_state = np.expand_dims(full_state, 0) # make it 4d : (1,H,W,C)
         #print('full_state after expansion: ', full_state)
-        #S3d = np.expand_dims((S.astype(float)), 0)
         q_function = self.model.predict(full_state) # q-value function
         print('q_function in get_action: ', q_function)
         return np.argmax(q_function[0])

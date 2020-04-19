@@ -17,7 +17,7 @@ def train_snake():
     agent = DQNAgent(state_size=state_size, action_size=action_size, head_starting_position=startingPosition) # builds network
 
     episodes = 1
-    maxsteps = 1000 # todo: use while
+    maxsteps = 500 # todo: use while
     decay = 0.9 / episodes * 2
 
     for e in range(episodes):
