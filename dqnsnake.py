@@ -7,22 +7,17 @@ from snake_world import Directions
 import random
 
 class DQNAgent():
-    def __init__(self, state_size, action_size, head_starting_position):
-        self.head_i, self.head_j = head_starting_position
+    def __init__(self, state_size, action_size):
         self.state_size = state_size
         self.action_size = action_size
-
         self.experience = deque(maxlen=2000)
-        self.frames = None
+        self.frames = None # convolutional layers
         self.numberOfChannels = 4
-
-        self.gamma = 0.99
-        self.learning_rate = 0.001
         self.batch_size = 64
-        self.epsilon = 1
-        self.start_train = 100
+        self.epsilon = 1 # explore probability
+        self.gamma = 0.95 # discount factor
+        #self.start_train = 100 # needed??
         self.model = self.build_network()
-
 
     def build_network(self):
         model = tf.keras.Sequential()
@@ -51,19 +46,6 @@ class DQNAgent():
         model.compile(tf.keras.optimizers.RMSprop(), 'MSE')
         return model
 
-
-    '''
-    def build_network(self):
-        model = tf.keras.Sequential()
-        model.add(layers.Flatten(input_shape=self.state_size))
-        model.add(layers.Dense(24, activation='relu', kernel_initializer='he_uniform'))
-        model.add(layers.Dense(24, activation='relu', kernel_initializer='he_uniform'))
-        model.add(layers.Dense(self.action_size, activation='linear', kernel_initializer='he_uniform'))
-        model.summary()
-        model.compile(optimizer=tf.keras.optimizers.Adam(self.learning_rate), loss='mse')
-        return model
-    '''
-
     def get_channels(self, frame):
         if self.frames is None:
             self.frames = deque([frame] * self.numberOfChannels)
@@ -89,12 +71,12 @@ class DQNAgent():
         return np.argmax(q_function[0])
 
     def train(self):
-        if len(self.experience) < self.start_train:
-            return
+        #if len(self.experience) < self.start_train:
+        #    return
 
+        # extract 
         batch_size = min(len(self.experience), self.batch_size)
-        #batch_size = self.batch_size
-        #print('batch_size: ', batch_size)
+        print('batch_size: ', batch_size)
         batch = random.sample(self.experience, batch_size)
 
         rewards, actions, dones = [], [], []
@@ -124,12 +106,12 @@ class DQNAgent():
         #print('dones: ', dones)
         #print('states: ', states)
 
+        # calculate Q-fuctions
+        # model has changed so functions of previous states are going to be different too
         Q_function = self.model.predict(states) # states shape: (batch_size, action_size)
-        #print('Q_function size: ', Q_function.shape)
-        #print('Q_function: ', Q_function)
-
         Q_function_next_state = self.model.predict(next_states)
 
+        # calculate target using Q of next state and udpate Q with it
         for i in range(len(Q_function)): # for each sample
             # calculate target from experience
             if dones[i]:
@@ -147,5 +129,6 @@ class DQNAgent():
             #self.model.fit(states, Q_function, batch_size=self.batch_size, epochs=1, verbose=0)
             # todo: test with train_on_batch
 
+        print('states: \n', states, '\n Q funtion: \n', Q_function)
         self.model.train_on_batch(states, Q_function)
 
