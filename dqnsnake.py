@@ -129,6 +129,7 @@ class DQNAgent():
             #self.model.fit(states, Q_function, batch_size=self.batch_size, epochs=1, verbose=0)
             # todo: test with train_on_batch
 
-        print('states: \n', states, '\n Q funtion: \n', Q_function)
-        self.model.train_on_batch(states, Q_function)
+        #print('states: \n', states, '\n Q funtion: \n', Q_function)
+        loss = self.model.train_on_batch(states, Q_function)
+        return loss
 

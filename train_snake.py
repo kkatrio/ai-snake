@@ -17,7 +17,7 @@ def train_snake():
     agent = DQNAgent(state_size=state_size, action_size=action_size)
 
     episodes = 1
-    maxsteps = 2 # todo: use while
+    maxsteps = 200 # todo: use while
     decay = 0.9 / episodes * 2 # changes epsilon : explore vs exploit
 
     for e in range(episodes):
@@ -26,21 +26,22 @@ def train_snake():
         #print('state array reset: \n', state)
 
         state = agent.get_channels(state)
+        loss = 0
 
         for t in range(maxsteps):
 
-            print('--- step: ', t)
+            #print('--- step: ', t)
 
             # state in this level is just a 2D array
             action = agent.get_action(state)
 
-            print('action chosen: ', action)
+            #print('action chosen: ', action)
 
             # step to the next state
             next_state, reward, done = env.step(action)
 
-            print('state array after step: \n', next_state)
-            print('reward returned: ', reward)
+            #print('state array after step: \n', next_state)
+            #print('reward returned: ', reward)
 
             # we store the next_state in (1,H,W,C)
             full_next_state = agent.get_channels(next_state)
@@ -50,7 +51,8 @@ def train_snake():
             agent.store_transition(state, action, reward, full_next_state, done)
 
             # use alternative policy to train model - rely on experience only
-            agent.train()
+            loss += agent.train()
+            #print('loss after each step: ', loss)
 
             state = full_next_state
 
@@ -58,12 +60,14 @@ def train_snake():
                 if agent.epsilon > 0.01:
                     agent.epsilon -= decay # agent slowly reduces exploring
 
-                print('episode: {:5d} steps: {:3d} epsilon: {:.5f}'.format(e, t, agent.epsilon))
+                print('episode: {:5d} steps: {:3d} epsilon: {:.5f} loss: {:.5f}'.format(e, t, agent.epsilon, loss))
                 break
 
+            # todo : avoid this
             if t is maxsteps - 1:
                 print('maxsteps reached!')
-                print('episode: {:5d} steps: {:3d} epsilon: {:.5f}'.format(e, t, agent.epsilon))
+                print('episode: {:5d} steps: {:3d} epsilon: {:.5f} loss: {:.5f}'.format(e, t, agent.epsilon, loss))
+
 
     #epochs = np.arange(episodes)
     #plt.plot(epochs, steps)
