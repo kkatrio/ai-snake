@@ -162,8 +162,8 @@ class Environment:
             return self.current_direction
 
     def regenerate_food(self):
-        ri = random.randrange(0, self.numberOfCells);
-        rj = random.randrange(0, self.numberOfCells);
+        ri = random.randrange(1, self.numberOfCells - 1); # account for walls
+        rj = random.randrange(1, self.numberOfCells - 1);
         self._cellType[ri][rj] = CellType.FOOD
 
     def has_hit_wall(self, head_position):
