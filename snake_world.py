@@ -58,7 +58,6 @@ class Environment:
         # env must be reset before used - otherwise the cells are empty - shape is ok though
 
         self.done = False
-        # must have action space = Direction
 
     def __getitem__(self, indices):
         return self._cellType[indices]
@@ -126,7 +125,7 @@ class Environment:
             # do we need to kiil the new head? length is increased
             self.done = True
             reward = -1
-            print('DIED')
+            #print('DIED')
             return (self._cellType, reward, self.done)
 
         # if we did not find food:
@@ -138,8 +137,9 @@ class Environment:
             reward = 0
 
         elif self[new_head_position] == CellType.FOOD:
-            print('found FOOD!')
+            #print('found FOOD!')
             self.regenerate_food()
+            #print('snake size: ', self.snake.size)
             reward = 1 * self.snake.size
 
         else:

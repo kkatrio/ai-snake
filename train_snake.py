@@ -6,7 +6,8 @@ def train_snake():
     numberOfCells = 10 # in each axis
     startingPosition = (4, 4) # head
     headDirection = 0 # NORTH
-    foodPosition = (2, 1)
+    foodPosition = (3, 6)
+    max_steps_allowed = 1000
 
     #worldSize = 800 # only for visualization
 
@@ -16,8 +17,8 @@ def train_snake():
     #print('state_size: ', state_size, 'action_size: ', action_size)
     agent = DQNAgent(state_size=state_size, action_size=action_size)
 
-    episodes = 1
-    maxsteps = 200 # todo: use while
+    episodes = 50
+    #maxsteps = 200
     decay = 0.9 / episodes * 2 # changes epsilon : explore vs exploit
 
     for e in range(episodes):
@@ -26,11 +27,13 @@ def train_snake():
         #print('state array reset: \n', state)
 
         state = agent.get_channels(state)
-        loss = 0
+        loss = 0.0
+        step = 0
+        done = False
 
-        for t in range(maxsteps):
-
-            #print('--- step: ', t)
+        #for t in range(maxsteps):
+        while not done:
+            #print('--- step: ', step)
 
             # state in this level is just a 2D array
             action = agent.get_action(state)
@@ -40,7 +43,7 @@ def train_snake():
             # step to the next state
             next_state, reward, done = env.step(action)
 
-            #print('state array after step: \n', next_state)
+            #print('state array after step ', step, ' : \n', next_state)
             #print('reward returned: ', reward)
 
             # we store the next_state in (1,H,W,C)
@@ -56,18 +59,16 @@ def train_snake():
 
             state = full_next_state
 
-            if done:
-                if agent.epsilon > 0.01:
-                    agent.epsilon -= decay # agent slowly reduces exploring
+            # limit max steps - avoid something bad
+            step += 1
+            if step >= max_steps_allowed:
+                done = True
 
-                print('episode: {:5d} steps: {:3d} epsilon: {:.5f} loss: {:.5f}'.format(e, t, agent.epsilon, loss))
-                break
+        # next episode
+        if agent.epsilon > 0.1:
+            agent.epsilon -= decay # agent slowly reduces exploring
 
-            # todo : avoid this
-            if t is maxsteps - 1:
-                print('maxsteps reached!')
-                print('episode: {:5d} steps: {:3d} epsilon: {:.5f} loss: {:.5f}'.format(e, t, agent.epsilon, loss))
-
+        print('episode: {:5d} step: {:3d} epsilon: {:.5f} loss: {:8.4f}'.format(e, step, agent.epsilon, loss))
 
     #epochs = np.arange(episodes)
     #plt.plot(epochs, steps)

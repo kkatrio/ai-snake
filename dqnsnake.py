@@ -6,6 +6,8 @@ import numpy as np
 from snake_world import Directions
 import random
 
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+
 class DQNAgent():
     def __init__(self, state_size, action_size):
         self.state_size = state_size
@@ -63,20 +65,20 @@ class DQNAgent():
         self.experience.append((state, action, reward, next_state, done))
 
     def get_action(self, state):
-        #if(np.random.rand() < self.epsilon):
-        #    return random.randrange(self.action_size)
+        # explore
+        if(np.random.rand() < self.epsilon):
+            #print('exploring...')
+            return random.randrange(self.action_size)
 
+        #print('exploiting...')
         q_function = self.model.predict(state) # q-value function
-        print('q_function in get_action: ', q_function)
+        #print('q_function in get_action: ', q_function)
         return np.argmax(q_function[0])
 
     def train(self):
-        #if len(self.experience) < self.start_train:
-        #    return
-
-        # extract 
+        # extract
         batch_size = min(len(self.experience), self.batch_size)
-        print('batch_size: ', batch_size)
+        #print('batch_size: ', batch_size)
         batch = random.sample(self.experience, batch_size)
 
         rewards, actions, dones = [], [], []
@@ -97,9 +99,9 @@ class DQNAgent():
 
             dones.append(batch[i][4])
 
-        #assert len(rewards) == batch_size
-        #assert len(actions) == batch_size
-        #assert len(dones) == batch_size
+        assert len(rewards) == batch_size
+        assert len(actions) == batch_size
+        assert len(dones) == batch_size
 
         #print('rewards: ', rewards)
         #print('actions: ', actions)
@@ -130,6 +132,7 @@ class DQNAgent():
             # todo: test with train_on_batch
 
         #print('states: \n', states, '\n Q funtion: \n', Q_function)
-        loss = self.model.train_on_batch(states, Q_function)
+        #print('Q function: ', Q_function)
+        loss = float(self.model.train_on_batch(states, Q_function))
         return loss
 
