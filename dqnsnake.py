@@ -19,6 +19,7 @@ class DQNAgent():
         self.epsilon = 1 # explore probability
         self.gamma = 0.95 # discount factor
         #self.start_train = 100 # needed??
+        self.input_shape = self.state_size + (self.numberOfChannels, )
         self.model = self.build_network()
 
     def build_network(self):
@@ -28,7 +29,7 @@ class DQNAgent():
             kernel_size=(3, 3),
             strides=(1, 1),
             # channels last
-            input_shape = self.state_size + (self.numberOfChannels, )
+            input_shape = self.state_size + (self.numberOfChannels, ) # input_shape
         ))
         model.add(layers.Activation('relu'))
         model.add(layers.Conv2D(
@@ -61,8 +62,17 @@ class DQNAgent():
     def store_transition(self, state, action, reward, next_state, done):
         # todo: flatten before storing - save memory?
 
+        memory_item = np.concatenate([
+            state.flatten(),
+            np.array(action).flatten(),
+            np.array(reward).flatten(),
+            next_state.flatten(),
+            1 * np.array(done).flatten()
+        ])
+        self.experience.append(memory_item)
+
         # state and next_state here are (1,H,W,C)
-        self.experience.append((state, action, reward, next_state, done))
+        #self.experience.append((state, action, reward, next_state, done))
 
     def get_action(self, state):
         # explore
@@ -79,60 +89,37 @@ class DQNAgent():
         # extract
         batch_size = min(len(self.experience), self.batch_size)
         #print('batch_size: ', batch_size)
-        batch = random.sample(self.experience, batch_size)
+        batch_experience = np.array(random.sample(self.experience, batch_size))
 
-        rewards, actions, dones = [], [], []
+        input_dim = np.prod(self.input_shape)
 
-        states_size = (batch_size, )  + self.state_size + (self.numberOfChannels, )
-        states = np.zeros(states_size) # (NHWC)
-        next_states = np.zeros(states_size)
+        # Extract [S, a, r, S', end] from experience.
+        states = batch_experience[:, 0:input_dim]
+        actions = batch_experience[:, input_dim]
+        rewards = batch_experience[:, input_dim + 1]
+        states_next = batch_experience[:, input_dim + 2:2 * input_dim + 2]
+        episode_ends = batch_experience[:, 2 * input_dim + 2]
 
-        for i in range(batch_size):
-            #assert batch[i][0].shape == states[i].shape
-            states[i] = batch[i][0] #implicit conversion to float from int
+        # Reshape to match the batch structure.
+        states = states.reshape((batch_size, ) + self.input_shape)
+        actions = np.cast['int'](actions)
+        rewards = rewards.repeat(self.action_size).reshape((batch_size, self.action_size))
+        states_next = states_next.reshape((batch_size, ) + self.input_shape)
+        episode_ends = episode_ends.repeat(self.action_size).reshape((batch_size, self.action_size))
 
-            actions.append(batch[i][1])
-            rewards.append(batch[i][2])
+        # Predict future state-action values.
+        X = np.concatenate([states, states_next], axis=0)
+        y = self.model.predict(X)
+        Q_next = np.max(y[batch_size:], axis=1).repeat(self.action_size).reshape((batch_size, self.action_size))
 
-            #assert batch[i][3].shape == next_states[i].shape
-            next_states[i] = batch[i][3]
-
-            dones.append(batch[i][4])
-
-        assert len(rewards) == batch_size
-        assert len(actions) == batch_size
-        assert len(dones) == batch_size
-
-        #print('rewards: ', rewards)
+        delta = np.zeros((batch_size, self.action_size))
+        delta[np.arange(batch_size), actions] = 1
+        #jprint('delta: ', delta)
         #print('actions: ', actions)
-        #print('dones: ', dones)
-        #print('states: ', states)
+        #print('y - Q function: ', y)
 
-        # calculate Q-fuctions
-        # model has changed so functions of previous states are going to be different too
-        Q_function = self.model.predict(states) # states shape: (batch_size, action_size)
-        Q_function_next_state = self.model.predict(next_states)
-
-        # calculate target using Q of next state and udpate Q with it
-        for i in range(len(Q_function)): # for each sample
-            # calculate target from experience
-            if dones[i]:
-                target = rewards[i] # if done, no reason to add value for next move
-            else:
-                target = rewards[i] + self.gamma * np.amax(Q_function_next_state[i]) # we take the action for which Q is max
-            #print("target: ", target)
-            #print('actions[i]: ', actions[i])
-            # actions contains the action to take (0, 1, or 2) for each sample
-            Q_function[i][actions[i]] = target
-            #print('Q_function: ', Q_function)
-
-            # Q <- Q + a(target - Q)
-            # from the prediction we take the action tha maximizes the q_function
-            #self.model.fit(states, Q_function, batch_size=self.batch_size, epochs=1, verbose=0)
-            # todo: test with train_on_batch
-
-        #print('states: \n', states, '\n Q funtion: \n', Q_function)
-        #print('Q function: ', Q_function)
-        loss = float(self.model.train_on_batch(states, Q_function))
+        targets = (1 - delta) * y[:batch_size] + delta * (rewards + self.gamma * (1 - episode_ends) * Q_next)
+        loss = float(self.model.train_on_batch(states, targets))
         return loss
+
 

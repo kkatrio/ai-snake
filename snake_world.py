@@ -122,7 +122,6 @@ class Environment:
         new_head_position = self.snake.move_head(self.current_direction) # just appends a new cell to the snake stack, i.e. grows its length
 
         if self.has_hit_wall(new_head_position) or self.has_hit_own_body(new_head_position):
-            # do we need to kiil the new head? length is increased
             self.done = True
             reward = -1
             #print('DIED')
