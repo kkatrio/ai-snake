@@ -96,9 +96,7 @@ class Environment:
         self._cellType[6, 4] = CellType.BODY
         # don't forget to put the body onto the actual snake too
         self.snake.append_body((5, 4))
-        tail = self.snake.tail
         self.snake.append_body((6, 4))
-        tail = self.snake.tail
 
         # quickly put the walls
         self._cellType[[0, -1], :] = CellType.WALL

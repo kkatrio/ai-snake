@@ -18,7 +18,6 @@ def train_snake():
     agent = DQNAgent(state_size=state_size, action_size=action_size)
 
     episodes = 30000
-    #maxsteps = 200
     decay = 0.9 / episodes * 2 # changes epsilon : explore vs exploit
 
     for e in range(episodes):
@@ -26,17 +25,19 @@ def train_snake():
         state = env.reset(startingPosition, headDirection, foodPosition)
         #print('state array reset: \n', state)
 
-        state = agent.get_channels(state)
+        agent.reset_convolutional_layers()
+        full_state = agent.get_convolutional_layers(state)
         loss = 0.0
         step = 0
         done = False
+        #maxsteps = 2
 
-        #for t in range(maxsteps):
+        #for step in range(maxsteps):
         while not done:
             #print('--- step: ', step)
 
             # state in this level is just a 2D array
-            action = agent.get_action(state)
+            action = agent.get_action(full_state)
 
             #print('action chosen: ', action)
 
@@ -47,17 +48,21 @@ def train_snake():
             #print('reward returned: ', reward)
 
             # we store the next_state in (1,H,W,C)
-            full_next_state = agent.get_channels(next_state)
-            assert(full_next_state.shape == (1, numberOfCells, numberOfCells, agent.numberOfChannels))
+            full_next_state = agent.get_convolutional_layers(next_state)
+
+            #print('full next state: \n:', full_next_state)
+
+            assert(full_next_state.shape == (1, numberOfCells, numberOfCells, agent.numberOfLayers))
 
             # save S,A,R,S' to experience
-            agent.store_transition(state, action, reward, full_next_state, done)
+            agent.store_transition(full_state, action, reward, full_next_state, done)
 
             # use alternative policy to train model - rely on experience only
-            loss += agent.train()
-            #print('loss after each step: ', loss)
+            current_loss = agent.train()
+            loss += current_loss
 
-            state = full_next_state
+            full_state = full_next_state
+
 
             # limit max steps - avoid something bad
             step += 1
@@ -68,7 +73,7 @@ def train_snake():
         if agent.epsilon > 0.1:
             agent.epsilon -= decay # agent slowly reduces exploring
 
-        print('episode: {:5d} step: {:3d} epsilon: {:.5f} memory {:4d} loss: {:8.4f}'.format(e, step, agent.epsilon, len(agent.experience), loss))
+        print('episode: {:5d} steps: {:3d} epsilon: {:.5f} memory {:4d} loss: {:8.4f}'.format(e, step, agent.epsilon, len(agent.experience), loss))
 
     #epochs = np.arange(episodes)
     #plt.plot(epochs, steps)
