@@ -7,6 +7,10 @@ from snake_world import Directions
 import random
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+tf.random.set_seed(
+    1
+)
+
 
 class DQNAgent():
     def __init__(self, state_size, action_size):
@@ -66,7 +70,15 @@ class DQNAgent():
         rolled = np.rollaxis(full_state, 1, 4)
         return rolled
 
-    def store_transition(self, state, action, reward, next_state, done):
+
+    def quick_save(self, state):
+
+        #memory_item = state.flatten()
+
+        self.experience.append(state)
+
+
+    def save_transition(self, state, action, reward, next_state, done):
 
         memory_item = np.concatenate([
             state.flatten(),

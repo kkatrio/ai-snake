@@ -92,11 +92,11 @@ class Environment:
         self._cellType[food_i, food_j] = CellType.FOOD
 
         # quick & dirty body setup
-        self._cellType[5, 4] = CellType.BODY
-        self._cellType[6, 4] = CellType.BODY
+        self._cellType[5, 5] = CellType.BODY
+        self._cellType[6, 5] = CellType.BODY
         # don't forget to put the body onto the actual snake too
-        self.snake.append_body((5, 4))
-        self.snake.append_body((6, 4))
+        self.snake.append_body((5, 5))
+        self.snake.append_body((6, 5))
 
         # quickly put the walls
         self._cellType[[0, -1], :] = CellType.WALL
@@ -117,36 +117,33 @@ class Environment:
         #print('current direction: ', self.current_direction)
         self.current_direction = self.turn(action)
         #print('new direction: ', self.current_direction)
-        new_head_position = self.snake.move_head(self.current_direction) # just appends a new cell to the snake stack, i.e. grows its length
+        new_head_position = self.snake.move_head(self.current_direction) # just appends a new cell to the snake stack
 
-        if self.has_hit_wall(new_head_position) or self.has_hit_own_body(new_head_position):
-            self.done = True
-            reward = -1
-            #print('DIED')
-            return (self._cellType, reward, self.done)
-
-        # if we did not find food:
-        if self[new_head_position] == CellType.EMPTY:
-            # erase tail - snake moves
+        if self[new_head_position] == CellType.FOOD:
+            #print('found FOOD!')
+            self.regenerate_food((1, 1))
+            #print('snake size: ', self.snake.size)
+            reward = 1 * self.snake.size
+        else:
+            # in all other cases erase tail
             previous_tail = self.snake.tail
             self.snake.erase_tail()
             self[previous_tail] = CellType.EMPTY
+
+        # all 3 possible cases are : found food, found empty, found wall
+        # in case of wall or empty we set the rewards
+        if self.has_hit_wall(new_head_position) or self.has_hit_own_body(new_head_position):
+            # Continue the move: state will be saved and on that state we 've got to look killed
+            self.done = True
+            #print('DIED')
+            reward = -1
+        elif self[new_head_position] == CellType.EMPTY:
             reward = 0
-
-        elif self[new_head_position] == CellType.FOOD:
-            #print('found FOOD!')
-            self.regenerate_food()
-            #print('snake size: ', self.snake.size)
-            reward = 1 * self.snake.size
-
-        else:
-            print('Something is wrong when taking a step, what happened?')
-            assert(False)
 
         # update the state for head and body
         self[previous_head] = CellType.BODY
         self[new_head_position] = CellType.HEAD # only after we have checked for empty space or food
-        assert(self.done is False)
+
         return (self._cellType, reward, self.done)
 
     def turn(self, action):
@@ -158,10 +155,13 @@ class Environment:
         elif action == Actions.CONTINUE_FORWARD:
             return self.current_direction
 
-    def regenerate_food(self):
-        ri = random.randrange(1, self.numberOfCells - 1); # account for walls
-        rj = random.randrange(1, self.numberOfCells - 1);
-        self._cellType[ri][rj] = CellType.FOOD
+    def regenerate_food(self, position):
+        if position is not None:
+            self._cellType[position] = CellType.FOOD
+        else:
+            ri = random.randrange(1, self.numberOfCells - 1); # account for walls
+            rj = random.randrange(1, self.numberOfCells - 1);
+            self._cellType[ri][rj] = CellType.FOOD
 
     def has_hit_wall(self, head_position):
         return True if self._cellType[head_position] == CellType.WALL else False
