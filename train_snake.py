@@ -1,5 +1,7 @@
 from snake_world import Environment, Actions
 from dqnsnake import DQNAgent
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 def train_snake():
 
@@ -17,7 +19,7 @@ def train_snake():
     #print('state_size: ', state_size, 'action_size: ', action_size)
     agent = DQNAgent(state_size=state_size, action_size=action_size)
 
-    episodes = 50
+    episodes = 20
     decay = 0.9 / episodes * 2 # changes epsilon : explore vs exploit
 
     for e in range(episodes):
@@ -31,8 +33,10 @@ def train_snake():
         step = 0
         done = False
 
-        #maxsteps = 9
-        #debug_actions = [0, 1, 2, 2, 2, 1, 1, 0, 0]
+        episode_reward = 0
+
+        #maxsteps = 3
+        #debug_actions = [0, 1, 2, 2, 2, 1, 1, 1, 0, 0, 1, 2, 2, 2, 1, 1, 0, 0]
 
         #for step in range(maxsteps):
         while not done:
@@ -41,6 +45,7 @@ def train_snake():
             # state in this level is just a 2D array
             action = agent.get_action(full_state)
             #action = debug_actions[step]
+            #action = agent.get_raction()
             #print('action chosen: ', action)
 
             # step to the next state
@@ -60,6 +65,7 @@ def train_snake():
             # save S,A,R,S' to experience
             # full states are a snapshot - copies of the state
             agent.save_transition(full_state, action, reward, full_next_state, done)
+            episode_reward += reward
 
             #if len(agent.experience) > 1:
             #    l = len(agent.experience)
@@ -80,13 +86,16 @@ def train_snake():
                 done = True
 
             #if done:
+            #    print('done!')
             #    break
 
         # next episode
         if agent.epsilon > 0.1:
             agent.epsilon -= decay # agent slowly reduces exploring
 
-        print('episode: {:5d} steps: {:3d} epsilon: {:.5f} memory {:4d} loss: {:8.4f}'.format(e, step, agent.epsilon, len(agent.experience), loss))
+        #agent.print_memory
+
+        print('episode: {:5d} steps: {:3d} epsilon: {:.3f} memory {:4d} loss: {:8.4f} reward: {:3d}'.format(e, step, agent.epsilon, len(agent.experience), loss, episode_reward))
 
     #epochs = np.arange(episodes)
     #plt.plot(epochs, steps)

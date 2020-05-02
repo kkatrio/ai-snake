@@ -7,10 +7,10 @@ from snake_world import Directions
 import random
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-tf.random.set_seed(
-    1
-)
-
+#tf.random.set_seed(
+#    1
+#)
+#np.random.seed(0)
 
 class DQNAgent():
     def __init__(self, state_size, action_size):
@@ -19,7 +19,7 @@ class DQNAgent():
         self.experience = deque(maxlen=2000)
         self.layers = None # convolutional layers
         self.numberOfLayers = 4
-        self.batch_size = 64
+        self.batch_size = 24
         self.epsilon = 1 # explore probability
         self.gamma = 0.95 # discount factor
         #self.start_train = 100 # needed??
@@ -74,9 +74,12 @@ class DQNAgent():
     def quick_save(self, state):
 
         #memory_item = state.flatten()
-
         self.experience.append(state)
 
+    @property
+    def print_memory(self):
+        #print('memory: \n:', self.experience[len(self.experience) - 1] - self.experience[0])
+        print('memory: \n:', self.experience)
 
     def save_transition(self, state, action, reward, next_state, done):
 
@@ -91,11 +94,16 @@ class DQNAgent():
         #if len(self.experience) == 5:
         #    print('diff: \n', self.experience[4] - self.experience[0])
 
+    def get_raction(self):
+        raction = np.random.randint(self.action_size)
+        #print('raction: ', raction)
+        return raction
+
     def get_action(self, state):
         # explore
-        if(np.random.rand() < self.epsilon):
+        if(np.random.random() < self.epsilon):
             #print('exploring...')
-            return random.randrange(self.action_size)
+            return np.random.randint(self.action_size)
 
         #print('exploiting...')
         q_function = self.model.predict(state) # q-value function
@@ -106,7 +114,14 @@ class DQNAgent():
         # extract
         batch_size = min(len(self.experience), self.batch_size)
         #print('batch_size: ', batch_size)
+
         batch_experience = np.array(random.sample(self.experience, batch_size))
+
+        #experience_array = np.array(self.experience)
+        #batch_experience = experience_array[-batch_size:]
+
+        #for i in batch_experience:
+        #    print('experience element: \n', i)
 
         input_dim = np.prod(self.input_shape)
 

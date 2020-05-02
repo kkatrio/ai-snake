@@ -88,8 +88,8 @@ class Environment:
         # put empty cells
         self._cellType[:] = CellType.EMPTY
 
-        food_i, food_j = food_position
-        self._cellType[food_i, food_j] = CellType.FOOD
+        # food
+        self._cellType[food_position] = CellType.FOOD
 
         # quick & dirty body setup
         self._cellType[5, 5] = CellType.BODY
@@ -155,7 +155,7 @@ class Environment:
         elif action == Actions.CONTINUE_FORWARD:
             return self.current_direction
 
-    def regenerate_food(self, position):
+    def regenerate_food(self, position=None):
         if position is not None:
             self._cellType[position] = CellType.FOOD
         else:
