@@ -19,7 +19,7 @@ def train_snake():
     #print('state_size: ', state_size, 'action_size: ', action_size)
     agent = DQNAgent(state_size=state_size, action_size=action_size)
 
-    episodes = 5
+    episodes = 10
     decay = 0.9 / episodes * 2 # changes epsilon : explore vs exploit
 
     epochs = []
@@ -103,7 +103,7 @@ def train_snake():
             #agent.print_memory
 
             print('episode: {:5d} steps: {:3d} epsilon: {:.3f} memory {:4d} loss: {:8.4f} reward: {:3d}'.format(e, steps, agent.epsilon, len(agent.experience), loss, episode_reward))
-            f.write('{:5d} {:3d} {:8.4f}\n'.format(e, steps, loss))
+            f.write('{:5d} {:3d} {:8.4f} {:4d}\n'.format(e, steps, loss, episode_reward))
 
 
 
