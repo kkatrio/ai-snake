@@ -1,7 +1,7 @@
 from snake_world import Environment, Actions
 from dqnsnake import DQNAgent
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+
 
 def train_snake():
 
@@ -19,8 +19,28 @@ def train_snake():
     #print('state_size: ', state_size, 'action_size: ', action_size)
     agent = DQNAgent(state_size=state_size, action_size=action_size)
 
-    episodes = 20
+    episodes = 5
     decay = 0.9 / episodes * 2 # changes epsilon : explore vs exploit
+
+    epochs = []
+    losses = []
+    steps_list = []
+
+    fig1 = plt.figure('loss')
+    ax1 = plt.gca()
+    sc1, = ax1.plot(epochs, losses)
+    sc1.set_marker('.')
+    sc1.set_markerfacecolor('b')
+    sc1.set_markeredgecolor('b')
+    sc1.set_color('b')
+
+    fig2 = plt.figure('steps')
+    ax2 = plt.gca()
+    sc2, = ax2.plot(epochs, steps_list)
+    sc2.set_marker('.')
+    sc2.set_markerfacecolor('r')
+    sc2.set_markeredgecolor('r')
+    sc2.set_color('r')
 
     for e in range(episodes):
 
@@ -30,7 +50,7 @@ def train_snake():
         agent.reset_convolutional_layers()
         full_state = agent.get_convolutional_layers(state)
         loss = 0.0
-        step = 0
+        steps = 0
         done = False
 
         episode_reward = 0
@@ -77,12 +97,13 @@ def train_snake():
             #print('current_loss: ', current_loss)
             loss += current_loss
 
+
             full_state = full_next_state
 
 
             # limit max steps - avoid something bad
-            step += 1
-            if step >= max_steps_allowed:
+            steps += 1
+            if steps >= max_steps_allowed:
                 done = True
 
             #if done:
@@ -95,12 +116,24 @@ def train_snake():
 
         #agent.print_memory
 
-        print('episode: {:5d} steps: {:3d} epsilon: {:.3f} memory {:4d} loss: {:8.4f} reward: {:3d}'.format(e, step, agent.epsilon, len(agent.experience), loss, episode_reward))
+        print('episode: {:5d} steps: {:3d} epsilon: {:.3f} memory {:4d} loss: {:8.4f} reward: {:3d}'.format(e, steps, agent.epsilon, len(agent.experience), loss, episode_reward))
 
-    #epochs = np.arange(episodes)
-    #plt.plot(epochs, steps)
+        plt.draw()
+        epochs.append(e)
+        losses.append(loss)
+        sc1.set_data(epochs, losses)
+        ax1.relim()
+        ax1.autoscale_view()
 
-    #plt.show()
+        steps_list.append(steps)
+        sc2.set_data(epochs, steps_list)
+        ax2.relim()
+        ax2.autoscale_view()
+
+        plt.pause(0.01)
+
+    plt.waitforbuttonpress()
+
 
 if __name__ == "__main__":
     train_snake()
