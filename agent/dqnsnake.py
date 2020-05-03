@@ -15,7 +15,7 @@ class DQNAgent():
         self.experience = deque(maxlen=2000)
         self.layers = None # convolutional layers
         self.numberOfLayers = 4
-        self.batch_size = 24
+        self.batch_size = 64
         self.epsilon = 1 # explore probability
         self.gamma = 0.95 # discount factor
         #self.start_train = 100 # needed??
@@ -25,6 +25,8 @@ class DQNAgent():
             self.deterministic = True
             tf.random.set_seed(1)
             np.random.seed(0)
+        else:
+            self.deterministic = False
 
         self.model = self.build_network()
 

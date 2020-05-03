@@ -16,8 +16,7 @@ def train_snake():
     env = Environment(numberOfCells, worldSize=0)
     state_size = env.state_size #(numberOfCells x numberOfCells) # todo: not great that the state size is taken form the environment. It should be given somewhat more generically to the agent and the env.
     action_size = Actions.action_size # 3
-    #print('state_size: ', state_size, 'action_size: ', action_size)
-    agent = DQNAgent(state_size=state_size, action_size=action_size, deterministic=True)
+    agent = DQNAgent(state_size=state_size, action_size=action_size)
 
     episodes = 4
     decay = 0.9 / episodes * 2 # changes epsilon : explore vs exploit

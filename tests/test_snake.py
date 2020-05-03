@@ -34,11 +34,7 @@ def test_deterministic_training():
     foodPosition = (3, 6)
 
     env = Environment(numberOfCells, worldSize=0)
-    state_size = env.state_size #(numberOfCells x numberOfCells) # todo: not great that the state size is taken form the environment. It should be given somewhat more generically to the agent and the env.
-    action_size = Actions.action_size # 3
-    #print('state_size: ', state_size, 'action_size: ', action_size)
-    agent = DQNAgent(state_size=state_size, action_size=action_size, deterministic=True)
-
+    agent = DQNAgent(state_size=env.state_size, action_size=Actions.action_size, deterministic=True)
     state = env.reset(startingPosition, headDirection, foodPosition)
     agent.reset_convolutional_layers()
     full_state = agent.get_convolutional_layers(state)
@@ -46,7 +42,6 @@ def test_deterministic_training():
     loss50 = -1
     action30 = -1
     action50 = -1
-    done = False
 
     maxsteps = 50
 
@@ -72,7 +67,7 @@ def test_deterministic_training():
     loss50 = current_loss
     action50 = action
 
-    assert(loss30 == 0.009624761529266834) # is this accurate generally?
+    assert(loss30 == 0.009624761529266834) # is this accurate really?
     assert(loss50 == 0.002301788656041026)
     assert(action30 == 1)
     assert(action50 == 0)
