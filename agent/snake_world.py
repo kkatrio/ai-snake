@@ -124,7 +124,7 @@ class Environment:
 
         if self[new_head_position] == CellType.FOOD:
             #print('found FOOD!')
-            self.regenerate_food((1, 1))
+            self.regenerate_food(new_head_position) # we cannot regenerate on the new head, because it will be overwritten below
             #print('snake size: ', self.snake.size)
             reward = 1 * self.snake.size
             self.fruits_eaten += 1
@@ -159,12 +159,14 @@ class Environment:
         elif action == Actions.CONTINUE_FORWARD:
             return self.current_direction
 
-    def regenerate_food(self, position=None):
+    def regenerate_food(self, new_head_position, position=None):
         if position is not None:
-            self._cellType[position] = CellType.FOOD
+            self._cellType[position] = CellType.FOOD # limiting on 2 fruits for debuging
         else:
-            ri = random.randrange(1, self.numberOfCells - 1); # account for walls
-            rj = random.randrange(1, self.numberOfCells - 1);
+            ri, rj = new_head_position
+            while self.snake.lies_on_position((ri, rj)):
+                ri = random.randrange(1, self.numberOfCells - 1) # account for walls
+                rj = random.randrange(1, self.numberOfCells - 1)
             self._cellType[ri][rj] = CellType.FOOD
 
     def has_hit_wall(self, head_position):
@@ -172,5 +174,3 @@ class Environment:
 
     def has_hit_own_body(self, head_position):
         return self._cellType[head_position] == CellType.BODY
-
-

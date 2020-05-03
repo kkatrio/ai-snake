@@ -99,7 +99,7 @@ def train_snake():
 
             #agent.print_memory
 
-            print('episode: {:5d} steps: {:3d} epsilon: {:.3f} memory {:4d} loss: {:8.4f} reward: {:3d} fruits: {:2d}'.format(e, steps, agent.epsilon, len(agent.experience), loss, episode_reward, env.fruits_eaten))
+            print('episode: {:5d} steps: {:3d} epsilon: {:.3f} loss: {:8.4f} reward: {:3d} fruits: {:2d}'.format(e, steps, agent.epsilon, loss, episode_reward, env.fruits_eaten))
             f.write('{:5d} {:3d} {:8.4f} {:4d} {:2d}\n'.format(e, steps, loss, episode_reward, env.fruits_eaten))
 
 

@@ -120,3 +120,21 @@ def test_deterministic_multiepisode_training():
     assert(losses[1] == 0.044061796041205525) # hmmm
     assert(losses[2] == 0.1294256257242523)
     assert(losses[3] == 2.783756474032998)
+
+def test_food_regeneration():
+
+    numberOfCells = 10 # in each axis
+    startingPosition = (4, 5) # head
+    headDirection = 0 # NORTH
+    foodPosition = (3, 6)
+
+    env = Environment(numberOfCells, worldSize=0)
+    state = env.reset(startingPosition, headDirection, foodPosition)
+    env.regenerate_food(startingPosition, (8, 8))
+    assert(env[(8, 8)] == 1)
+
+    for i in range(200):
+        env.regenerate_food(startingPosition)
+    assert(env[startingPosition] == 2)
+    assert(env[(5, 5)] == 3)
+    assert(env[(6, 5)] == 3)

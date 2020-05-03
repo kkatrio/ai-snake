@@ -38,6 +38,9 @@ class Snake():
     def erase_tail(self):
         self.stack.popleft()
 
+    def lies_on_position(self, position):
+        return True if position in self.stack else False
+
     @property
     def head(self):
         # returns the position(index) of the top of the stack
