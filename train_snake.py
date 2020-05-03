@@ -17,9 +17,9 @@ def train_snake():
     state_size = env.state_size #(numberOfCells x numberOfCells) # todo: not great that the state size is taken form the environment. It should be given somewhat more generically to the agent and the env.
     action_size = Actions.action_size # 3
     #print('state_size: ', state_size, 'action_size: ', action_size)
-    agent = DQNAgent(state_size=state_size, action_size=action_size)
+    agent = DQNAgent(state_size=state_size, action_size=action_size, deterministic=True)
 
-    episodes = 10
+    episodes = 4
     decay = 0.9 / episodes * 2 # changes epsilon : explore vs exploit
 
     epochs = []
@@ -40,9 +40,6 @@ def train_snake():
             done = False
 
             episode_reward = 0
-
-            #maxsteps = 3
-            #debug_actions = [0, 1, 2, 2, 2, 1, 1, 1, 0, 0, 1, 2, 2, 2, 1, 1, 0, 0]
 
             #for step in range(maxsteps):
             while not done:
@@ -102,8 +99,8 @@ def train_snake():
 
             #agent.print_memory
 
-            print('episode: {:5d} steps: {:3d} epsilon: {:.3f} memory {:4d} loss: {:8.4f} reward: {:3d}'.format(e, steps, agent.epsilon, len(agent.experience), loss, episode_reward))
-            f.write('{:5d} {:3d} {:8.4f} {:4d}\n'.format(e, steps, loss, episode_reward))
+            print('episode: {:5d} steps: {:3d} epsilon: {:.3f} memory {:4d} loss: {:8.4f} reward: {:3d} fruits: {:2d}'.format(e, steps, agent.epsilon, len(agent.experience), loss, episode_reward, env.fruits_eaten))
+            f.write('{:5d} {:3d} {:8.4f} {:4d} {:2d}\n'.format(e, steps, loss, episode_reward, env.fruits_eaten))
 
 
 

@@ -59,6 +59,8 @@ class Environment:
 
         self.done = False
 
+        self.fruits_eaten = 0
+
     def __getitem__(self, indices):
         return self._cellType[indices]
 
@@ -84,6 +86,7 @@ class Environment:
         self.snake = Snake(head_position) # initializing a snake here? sure
         self.current_direction = head_direction
         self.done = False
+        self.fruits_eaten = 0
 
         # put empty cells
         self._cellType[:] = CellType.EMPTY
@@ -124,6 +127,7 @@ class Environment:
             self.regenerate_food((1, 1))
             #print('snake size: ', self.snake.size)
             reward = 1 * self.snake.size
+            self.fruits_eaten += 1
         else:
             # in all other cases erase tail
             previous_tail = self.snake.tail

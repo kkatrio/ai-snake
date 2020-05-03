@@ -22,6 +22,7 @@ class DQNAgent():
         self.input_shape = self.state_size + (self.numberOfLayers, )
 
         if(deterministic):
+            self.deterministic = True
             tf.random.set_seed(1)
             np.random.seed(0)
 
@@ -109,12 +110,12 @@ class DQNAgent():
         #print('q_function in get_action: ', q_function)
         return np.argmax(q_function[0])
 
-    def train(self, determinitic=False):
+    def train(self):
         # extract
         batch_size = min(len(self.experience), self.batch_size)
         #print('batch_size: ', batch_size)
 
-        if (determinitic):
+        if (self.deterministic):
             experience_array = np.array(self.experience)
             batch_experience = experience_array[-batch_size:]
         else:
