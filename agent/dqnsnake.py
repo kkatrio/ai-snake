@@ -3,17 +3,13 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 import numpy as np
-from snake_world import Directions
+from dqnsnake.agent.snake_world import Directions
 import random
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-#tf.random.set_seed(
-#    1
-#)
-#np.random.seed(0)
 
 class DQNAgent():
-    def __init__(self, state_size, action_size):
+    def __init__(self, state_size, action_size, deterministic=False):
         self.state_size = state_size
         self.action_size = action_size
         self.experience = deque(maxlen=2000)
@@ -24,7 +20,13 @@ class DQNAgent():
         self.gamma = 0.95 # discount factor
         #self.start_train = 100 # needed??
         self.input_shape = self.state_size + (self.numberOfLayers, )
+
+        if(deterministic):
+            tf.random.set_seed(1)
+            np.random.seed(0)
+
         self.model = self.build_network()
+
 
     def build_network(self):
         model = tf.keras.Sequential()
@@ -72,7 +74,6 @@ class DQNAgent():
 
 
     def quick_save(self, state):
-
         #memory_item = state.flatten()
         self.experience.append(state)
 
@@ -94,10 +95,8 @@ class DQNAgent():
         #if len(self.experience) == 5:
         #    print('diff: \n', self.experience[4] - self.experience[0])
 
-    def get_raction(self):
-        raction = np.random.randint(self.action_size)
-        #print('raction: ', raction)
-        return raction
+    def get_exploration_action(self):
+        return np.random.randint(self.action_size)
 
     def get_action(self, state):
         # explore
@@ -110,15 +109,16 @@ class DQNAgent():
         #print('q_function in get_action: ', q_function)
         return np.argmax(q_function[0])
 
-    def train(self):
+    def train(self, determinitic=False):
         # extract
         batch_size = min(len(self.experience), self.batch_size)
         #print('batch_size: ', batch_size)
 
-        batch_experience = np.array(random.sample(self.experience, batch_size))
-
-        #experience_array = np.array(self.experience)
-        #batch_experience = experience_array[-batch_size:]
+        if (determinitic):
+            experience_array = np.array(self.experience)
+            batch_experience = experience_array[-batch_size:]
+        else:
+            batch_experience = np.array(random.sample(self.experience, batch_size))
 
         #for i in batch_experience:
         #    print('experience element: \n', i)

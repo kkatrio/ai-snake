@@ -1,5 +1,5 @@
-from snake_world import Environment, Actions
-from dqnsnake import DQNAgent
+from dqnsnake.agent.snake_world import Environment, Actions
+from dqnsnake.agent.dqnsnake import DQNAgent
 import matplotlib.pyplot as plt
 
 
