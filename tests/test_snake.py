@@ -5,11 +5,10 @@ from dqnsnake.agent.snake_world import Environment, Actions
 def test_walk():
     numberOfCells = 10
     startingPosition = (4, 5)
-    headDirection = 0 # NORTH
     foodPosition = (3, 6)
 
     env = Environment(numberOfCells, worldSize=0)
-    env.reset(startingPosition, headDirection, foodPosition)
+    env.reset(startingPosition, foodPosition)
 
     debug_actions = [0, 1, 2, 2, 2, 1, 1, 1, 0, 0, 1, 2, 2, 2, 1, 1, 0, 0]
 
@@ -30,12 +29,11 @@ def test_deterministic_training():
 
     numberOfCells = 10 # in each axis
     startingPosition = (4, 5) # head
-    headDirection = 0 # NORTH
     foodPosition = (3, 6)
 
     env = Environment(numberOfCells, worldSize=0)
-    agent = DQNAgent(state_size=env.state_size, action_size=Actions.action_size, deterministic=True)
-    state = env.reset(startingPosition, headDirection, foodPosition)
+    agent = DQNAgent(state_size=env.state_size, action_size=Actions.action_size, deterministic=True, batch_size=24, memory_limit=2000) # todo: tf summary
+    state = env.reset(startingPosition, foodPosition)
     agent.reset_convolutional_layers()
     full_state = agent.get_convolutional_layers(state)
     loss30 = -1
@@ -47,11 +45,11 @@ def test_deterministic_training():
 
     for step in range(maxsteps):
         action = agent.get_exploration_action()
-        next_state, reward, done = env.step(action)
+        next_state, reward, done = env.step(action, food_regeneration=False, food_position=(1, 1))
         full_next_state = agent.get_convolutional_layers(next_state)
         assert(full_next_state.shape == (1, numberOfCells, numberOfCells, agent.numberOfLayers))
         agent.save_transition(full_state, action, reward, full_next_state, done)
-        current_loss = agent.train(determinitic=True)
+        current_loss = agent.train()
 
         if (step == 29):
             action30 = action
@@ -76,13 +74,12 @@ def test_deterministic_multiepisode_training():
 
     numberOfCells = 10 # in each axis
     startingPosition = (4, 5) # head
-    headDirection = 0 # NORTH
     foodPosition = (3, 6)
 
     env = Environment(numberOfCells, worldSize=0)
-    state_size = env.state_size #(numberOfCells x numberOfCells) # todo: not great that the state size is taken form the environment. It should be given somewhat more generically to the agent and the env.
+    state_size = env.state_size
     action_size = Actions.action_size # 3
-    agent = DQNAgent(state_size=state_size, action_size=action_size, deterministic=True)
+    agent = DQNAgent(state_size=state_size, action_size=action_size, deterministic=True, batch_size=24, memory_limit=2000)
 
     losses = [-1, -1, -1, -1]
     done = False
@@ -92,19 +89,19 @@ def test_deterministic_multiepisode_training():
 
     for e in range(episodes):
 
-        state = env.reset(startingPosition, headDirection, foodPosition)
+        state = env.reset(startingPosition, foodPosition)
         agent.reset_convolutional_layers()
         full_state = agent.get_convolutional_layers(state)
         loss = 0
 
         for step in range(maxsteps):
             action = agent.get_exploration_action()
-            next_state, reward, done = env.step(action)
+            next_state, reward, done = env.step(action, food_regeneration=False, food_position=(1, 1))
             full_next_state = agent.get_convolutional_layers(next_state)
             assert(full_next_state.shape == (1, numberOfCells, numberOfCells, agent.numberOfLayers))
             agent.save_transition(full_state, action, reward, full_next_state, done)
 
-            current_loss = agent.train(determinitic=True)
+            current_loss = agent.train()
             loss += current_loss
 
             full_state = full_next_state
@@ -120,16 +117,36 @@ def test_food_regeneration():
 
     numberOfCells = 10 # in each axis
     startingPosition = (4, 5) # head
-    headDirection = 0 # NORTH
     foodPosition = (3, 6)
 
     env = Environment(numberOfCells, worldSize=0)
-    state = env.reset(startingPosition, headDirection, foodPosition)
-    env.regenerate_food(startingPosition, (8, 8))
+    state = env.reset(startingPosition, foodPosition)
+    env.regenerate_food((8, 8))
     assert(env[(8, 8)] == 1)
 
     for i in range(200):
-        env.regenerate_food(startingPosition)
+        env.regenerate_food()
+    print(env._cellType)
     assert(env[startingPosition] == 2)
     assert(env[(5, 5)] == 3)
     assert(env[(6, 5)] == 3)
+
+def test_mechanics():
+    numberOfCells = 10 # in each axis
+    startingPosition = (2, 2) # head
+    foodPositions = [(2, 7), (7, 7), (7, 2), (2, 2)]
+
+    env = Environment(numberOfCells, worldSize=0)
+    state = env.reset(startingPosition, foodPositions[0])
+
+    for i in range(20):
+        if (i % 5 == 0):
+            action = 2
+            env.regenerate_food(foodPositions[i % 4])
+        else:
+            action = 0
+        state, reward, done = env.step(action, food_regeneration=False)
+        print(state)
+        print('reward: ', reward, ' snake size: ', env.snake.size)
+
+    assert(env.snake.size == 7)

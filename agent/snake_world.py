@@ -51,7 +51,7 @@ class Environment:
         self.world_size = worldSize # pixels
         #self.map = Map(self.numberOfCells, self.world_size) # needed only for visualization
         self.snake = None
-        self.current_direction = None
+        self.current_direction = 0 # North
 
         # the state really
         self._cellType = np.empty([self.numberOfCells, self.numberOfCells], dtype=int)
@@ -80,11 +80,11 @@ class Environment:
         return self._cellType.shape
     #must have property action size
 
-    def reset(self, head_position, head_direction, food_position): # things needed here : body
+    def reset(self, head_position, food_position):
 
         # setup the snake at its starting position
         self.snake = Snake(head_position) # initializing a snake here? sure
-        self.current_direction = head_direction
+        self.current_direction = 0
         self.done = False
         self.fruits_eaten = 0
 
@@ -111,38 +111,30 @@ class Environment:
         # todo: _cellType maybe should be called cellState
 
 
-    def step(self, action):
+    def step(self, action, food_regeneration=True, food_position=None): # keyword args here a quick fix for testing
 
-        # before we make a turn and move the head, we save the current cell position:
-        # we will need it if we will not die
         previous_head = self.snake.head
-
-        #print('current direction: ', self.current_direction)
         self.current_direction = self.turn(action)
-        #print('new direction: ', self.current_direction)
-        new_head_position = self.snake.move_head(self.current_direction) # just appends a new cell to the snake stack
+        new_head_position = self.snake.move_head(self.current_direction) # just appends a new cell to the snake stack == increases length
 
-        if self[new_head_position] == CellType.FOOD:
-            #print('found FOOD!')
-            self.regenerate_food(new_head_position) # we cannot regenerate on the new head, because it will be overwritten below
-            #print('snake size: ', self.snake.size)
-            reward = 1 * self.snake.size
-            self.fruits_eaten += 1
-        else:
-            # in all other cases erase tail
+        reward = 0
+        if not self[new_head_position] == CellType.FOOD:
+            # in all other cases erase tail, which means moving forward
             previous_tail = self.snake.tail
             self.snake.erase_tail()
             self[previous_tail] = CellType.EMPTY
 
-        # all 3 possible cases are : found food, found empty, found wall
-        # in case of wall or empty we set the rewards
-        if self.has_hit_wall(new_head_position) or self.has_hit_own_body(new_head_position):
-            # Continue the move: state will be saved and on that state we 've got to look killed
-            self.done = True
-            #print('DIED')
-            reward = -1
-        elif self[new_head_position] == CellType.EMPTY:
-            reward = 0
+            if self.has_hit_wall(new_head_position) or self.has_hit_own_body(new_head_position):
+                self.done = True
+                #print('DIED')
+                reward = -1
+        else:
+            self.fruits_eaten += 1
+            reward = self.snake.size
+            if food_regeneration: # for testing, keep it?
+                self.regenerate_food() # we cannot regenerate on the snake
+            if food_position is not None:
+                self.regenerate_food(food_position)
 
         # update the state for head and body
         self[previous_head] = CellType.BODY
@@ -159,11 +151,11 @@ class Environment:
         elif action == Actions.CONTINUE_FORWARD:
             return self.current_direction
 
-    def regenerate_food(self, new_head_position, position=None):
+    def regenerate_food(self, position=None):
         if position is not None:
             self._cellType[position] = CellType.FOOD # limiting on 2 fruits for debuging
         else:
-            ri, rj = new_head_position
+            ri, rj = self.snake.head
             while self.snake.lies_on_position((ri, rj)):
                 ri = random.randrange(1, self.numberOfCells - 1) # account for walls
                 rj = random.randrange(1, self.numberOfCells - 1)

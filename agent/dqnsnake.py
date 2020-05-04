@@ -9,13 +9,13 @@ import random
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 class DQNAgent():
-    def __init__(self, state_size, action_size, deterministic=False):
+    def __init__(self, state_size, action_size, deterministic=False, batch_size=64, memory_limit=2000):
         self.state_size = state_size
         self.action_size = action_size
-        self.experience = deque(maxlen=2000)
+        self.experience = deque(maxlen=memory_limit)
         self.layers = None # convolutional layers
         self.numberOfLayers = 4
-        self.batch_size = 64
+        self.batch_size = batch_size
         self.epsilon = 1 # explore probability
         self.gamma = 0.95 # discount factor
         #self.start_train = 100 # needed??
