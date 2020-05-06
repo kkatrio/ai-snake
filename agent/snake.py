@@ -14,7 +14,7 @@ class Snake():
         self.stack.append(head_starting_position)
 
     def _update_head_position(self, direction):
-        # j is the second index in the array state -> move horizontaly
+        # j is the second index in the array state -> move horizontally
         # i is the first -> move vertically
         if direction == Directions.NORTH:
             self.head_i -= 1
@@ -45,7 +45,7 @@ class Snake():
     def head(self):
         # returns the position(index) of the top of the stack
         # it must always be > 0
-        return self.stack[len(self.stack)-1]
+        return self.stack[-1]
 
     @property
     def tail(self):

@@ -150,3 +150,57 @@ def test_mechanics():
         print('reward: ', reward, ' snake size: ', env.snake.size)
 
     assert(env.snake.size == 7)
+
+
+def test_growing():
+
+    numberOfCells = 10 # in each axis
+    startingPosition = (2, 2) # head
+    foodPositions = [(3, 1), (3, 3), (5, 3), (6, 1), (9, 9), (9, 9)] # last two values are dummy, just to satisfy the indices below
+
+    env = Environment(numberOfCells, worldSize=0)
+    agent = DQNAgent(state_size=env.state_size, action_size=Actions.action_size, deterministic=True, batch_size=24, memory_limit=2000)
+
+    episodes = 2
+    food_index = 0
+    step = 0
+    for e in range(episodes):
+
+        agent.reset_convolutional_layers()
+        state = env.reset(startingPosition, foodPositions[food_index])
+        full_state = agent.get_convolutional_layers(state)
+        done = False
+        loss = 0
+        previous_size = 3 # keep track of snake size
+        while not done:
+
+            #print('\nfood_index: ', food_index, ' if we eat, we will place the next fruit in: ', foodPositions[food_index + 1])
+            action = agent.get_action(state)
+            next_state, reward, done = env.step(action, food_regeneration=False, food_position=foodPositions[food_index + 1])
+
+            print('head is at: ', env.snake.head, '  snake size: ', reward)
+
+            if env.snake.size > previous_size: # eaten
+                previous_size = env.snake.size
+                food_index += 1
+
+            full_next_state = agent.get_convolutional_layers(next_state)
+            agent.save_transition(full_state, action, reward, full_next_state, done)
+            current_loss = agent.train()
+            loss += current_loss
+            #print('loss: ', loss)
+
+            full_state = full_next_state
+
+            if step == 1:
+                assert(env.snake.size == 4)
+            if step == 6:
+                assert(env.snake.size == 4)
+            if step == 8:
+                assert(env.snake.size == 5)
+            if step == 11:
+                assert(env.snake.size == 6)
+            if step == 12:
+                assert(loss == 20.45940124988556)
+
+            step += 1
