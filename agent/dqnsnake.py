@@ -87,6 +87,7 @@ class DQNAgent():
 
     def save_transition(self, state, action, reward, next_state, done):
 
+        '''
         memory_item = np.concatenate([
             state.flatten(),
             np.array(action).flatten(),
@@ -97,6 +98,8 @@ class DQNAgent():
         self.experience.append(memory_item)
         #if len(self.experience) == 5:
         #    print('diff: \n', self.experience[4] - self.experience[0])
+        '''
+        self.experience.append((state, action, reward, next_state, done))
 
     def get_exploration_action(self):
         return np.random.randint(self.action_size)
@@ -126,36 +129,43 @@ class DQNAgent():
         #for i in batch_experience:
         #    print('experience element: \n', i)
 
-        input_dim = np.prod(self.input_shape)
+        #print('shape: ', batch_experience.shape)
 
-        # Extract [S, a, r, S', end] from experience.
-        states = batch_experience[:, 0:input_dim]
-        actions = batch_experience[:, input_dim]
-        rewards = batch_experience[:, input_dim + 1]
-        states_next = batch_experience[:, input_dim + 2:2 * input_dim + 2]
-        episode_ends = batch_experience[:, 2 * input_dim + 2]
+        states = np.zeros((batch_size, ) + self.input_shape, dtype=int)
+        next_states = np.zeros((batch_size, ) + self.input_shape, dtype=int)
+        for i in range(batch_size):
+            states[i] = batch_experience[i, 0]
+            next_states[i] = batch_experience[i, 3]
 
-        # Reshape to match the batch structure.
-        states = states.reshape((batch_size, ) + self.input_shape)
+        actions = batch_experience[:, 1]
+        rewards = batch_experience[:, 2]
+        done_flags = batch_experience[:, 4]
+
         actions = np.cast['int'](actions)
-        rewards = rewards.repeat(self.action_size).reshape((batch_size, self.action_size))
-        states_next = states_next.reshape((batch_size, ) + self.input_shape)
-        episode_ends = episode_ends.repeat(self.action_size).reshape((batch_size, self.action_size))
+        rewards = np.cast['int'](rewards)
+        done_flags = np.cast['int'](done_flags)
+
 
         # Predict future state-action values.
-        X = np.concatenate([states, states_next], axis=0)
-        y = self.model.predict(X)
-        Q_next = np.max(y[batch_size:], axis=1).repeat(self.action_size).reshape((batch_size, self.action_size))
+        #X = np.concatenate([states, next_states], axis=0)
+        #y = self.model.predict(X)
+        Q_function = self.model.predict(states)
+        Q_function_next = self.model.predict(next_states)
 
-        delta = np.zeros((batch_size, self.action_size))
-        delta[np.arange(batch_size), actions] = 1
-        #jprint('delta: ', delta)
+        #print('Q: ', Q_function)
+        #print('Qnext: ', Q_function_next)
+
         #print('actions: ', actions)
-        #print('y - Q function: ', y)
+        #print('actions shape: ', actions.shape)
 
-        targets = (1 - delta) * y[:batch_size] + delta * (rewards + self.gamma * (1 - episode_ends) * Q_next)
+        #print('qmax: ', np.amax(Q_function_next, axis=1))
+        target = rewards + self.gamma * (1 - done_flags) * np.amax(Q_function_next, axis=1)
+        #print('target: ', target)
+
+        Q_function[np.arange(batch_size), actions] = target
+
+        #print('Q_function updated: ', Q_function)
         #print('targets - q functions: \n', targets)
-        loss = float(self.model.train_on_batch(states, targets))
+        loss = float(self.model.train_on_batch(states, Q_function))
         return loss
-
 
