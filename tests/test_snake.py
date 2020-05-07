@@ -24,6 +24,48 @@ def test_walk():
 
     assert(done)
 
+def test_smoke():
+
+    numberOfCells = 10 # in each axis
+    startingPosition = (4, 5) # head
+    foodPosition = (3, 6)
+
+    env = Environment(numberOfCells, worldSize=0)
+    agent = DQNAgent(state_size=env.state_size, action_size=Actions.action_size, deterministic=True, batch_size=24, memory_limit=2000) # todo: tf summary
+    state = env.reset(startingPosition, foodPosition)
+    agent.reset_convolutional_layers()
+    full_state = agent.get_convolutional_layers(state)
+    loss1 = -1
+    loss2 = -1
+    action1 = -1
+    action2 = -1
+
+    maxsteps = 2
+
+    for step in range(maxsteps):
+        action = agent.get_exploration_action()
+        next_state, reward, done = env.step(action, food_regeneration=False, food_position=(1, 1))
+        full_next_state = agent.get_convolutional_layers(next_state)
+        assert(full_next_state.shape == (1, numberOfCells, numberOfCells, agent.numberOfLayers))
+        agent.save_transition(full_state, action, reward, full_next_state, done)
+        current_loss = agent.train()
+
+        if (step == 0):
+            action1 = action
+            loss1 = current_loss
+
+        full_state = full_next_state
+
+    loss2 = current_loss
+    action2 = action
+
+    # todo: udpate assertion values after changed tf inputs -> different randomness
+    assert(False)
+    #assert(loss30 == 0.009624761529266834) # is this accurate really?
+    #assert(loss50 == 0.002301788656041026)
+    #assert(action30 == 1)
+    #assert(action50 == 0)
+
 
 def test_deterministic_training():
 
