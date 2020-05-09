@@ -159,10 +159,14 @@ class DQNAgent():
         #print('actions shape: ', actions.shape)
 
         #print('qmax: ', np.amax(Q_function_next, axis=1))
-        target = rewards + self.gamma * (1 - done_flags) * np.amax(Q_function_next, axis=1)
+        targets = rewards + self.gamma * (1 - done_flags) * np.amax(Q_function_next, axis=1)
+        assert(targets.shape == (batch_size, ))
         #print('target: ', target)
 
-        Q_function[np.arange(batch_size), actions] = target
+        Q_function[np.arange(batch_size), actions] = targets
+        assert(Q_function.shape == (batch_size, 3))
+
+
 
         #print('Q_function updated: ', Q_function)
         #print('targets - q functions: \n', targets)
