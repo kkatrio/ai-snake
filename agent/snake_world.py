@@ -26,7 +26,7 @@ class Map():
     def __init__(self, nCells, canvas_size):
         self.numberOfCells = nCells # in each axis
         self.numberOfPoints = self.numberOfCells + 1
-        self.edge = canvas_size / self.numberOfCells
+        self.edge = canvas_size / self.numberOfCells # length
 
         self.map = np.empty((self.numberOfPoints, self.numberOfPoints), dtype=Point)
         self.create_coords()
@@ -46,10 +46,10 @@ class Map():
 
 
 class Environment:
-    def __init__(self, nCells, worldSize):
+    def __init__(self, nCells, worldSize): # todo : rm pixels from here
         self.numberOfCells = nCells
         self.world_size = worldSize # pixels
-        #self.map = Map(self.numberOfCells, self.world_size) # needed only for visualization
+        self.map = Map(self.numberOfCells, self.world_size) # needed only for visualization
         self.snake = None
         self.current_direction = 0 # North
 
@@ -67,9 +67,9 @@ class Environment:
     def __setitem__(self, indices, cell_type):
         self._cellType[indices] = cell_type
 
-    #@property
-    #def get_map(self):
-    #    return self.map
+    @property
+    def get_map(self):
+        return self.map
 
     @property
     def state(self):

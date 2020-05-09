@@ -7,7 +7,6 @@ def train_snake():
 
     numberOfCells = 10 # in each axis
     startingPosition = (4, 5) # head
-    headDirection = 0 # NORTH
     foodPosition = (3, 6)
     max_steps_allowed = 1000
 
@@ -101,6 +100,7 @@ def train_snake():
             print('episode: {:5d} steps: {:3d} epsilon: {:.3f} loss: {:8.4f} reward: {:3d} fruits: {:2d}'.format(e, steps, agent.epsilon, loss, episode_reward, env.fruits_eaten))
             f.write('{:5d} {:3d} {:8.4f} {:4d} {:2d}\n'.format(e, steps, loss, episode_reward, env.fruits_eaten))
 
+        agent.model.save('trained_snake.model')
 
 
 if __name__ == "__main__":
