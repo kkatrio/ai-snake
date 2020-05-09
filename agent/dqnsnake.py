@@ -54,7 +54,7 @@ class DQNAgent():
         model.add(layers.Activation('relu'))
         model.add(layers.Dense(self.action_size))
 
-        model.summary()
+        #model.summary()
         model.compile(tf.keras.optimizers.RMSprop(), 'MSE')
         return model
 
@@ -86,19 +86,6 @@ class DQNAgent():
         print('memory: \n:', self.experience)
 
     def save_transition(self, state, action, reward, next_state, done):
-
-        '''
-        memory_item = np.concatenate([
-            state.flatten(),
-            np.array(action).flatten(),
-            np.array(reward).flatten(),
-            next_state.flatten(),
-            1 * np.array(done).flatten()
-        ])
-        self.experience.append(memory_item)
-        #if len(self.experience) == 5:
-        #    print('diff: \n', self.experience[4] - self.experience[0])
-        '''
         self.experience.append((state, action, reward, next_state, done))
 
     def get_exploration_action(self):
@@ -129,8 +116,9 @@ class DQNAgent():
         #for i in batch_experience:
         #    print('experience element: \n', i)
 
-        #print('shape: ', batch_experience.shape)
+        input_dim = np.prod(self.input_shape)
 
+        # Extract [S, a, r, S', end] from experience.
         states = np.zeros((batch_size, ) + self.input_shape, dtype=int)
         next_states = np.zeros((batch_size, ) + self.input_shape, dtype=int)
         for i in range(batch_size):
@@ -145,31 +133,19 @@ class DQNAgent():
         rewards = np.cast['int'](rewards)
         done_flags = np.cast['int'](done_flags)
 
-
-        # Predict future state-action values.
-        #X = np.concatenate([states, next_states], axis=0)
-        #y = self.model.predict(X)
         Q_function = self.model.predict(states)
         Q_function_next = self.model.predict(next_states)
 
         #print('Q: ', Q_function)
         #print('Qnext: ', Q_function_next)
 
-        #print('actions: ', actions)
-        #print('actions shape: ', actions.shape)
-
-        #print('qmax: ', np.amax(Q_function_next, axis=1))
         targets = rewards + self.gamma * (1 - done_flags) * np.amax(Q_function_next, axis=1)
         assert(targets.shape == (batch_size, ))
-        #print('target: ', target)
 
         Q_function[np.arange(batch_size), actions] = targets
         assert(Q_function.shape == (batch_size, 3))
 
-
-
-        #print('Q_function updated: ', Q_function)
-        #print('targets - q functions: \n', targets)
         loss = float(self.model.train_on_batch(states, Q_function))
         return loss
+
 

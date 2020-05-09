@@ -2,6 +2,7 @@ import numpy as np
 import random
 from dqnsnake.agent.snake import Snake, Directions
 
+
 class CellType():
     HEAD = 2
     BODY = 3
@@ -46,7 +47,7 @@ class Map():
 
 
 class Environment:
-    def __init__(self, nCells, worldSize): # todo : rm pixels from here
+    def __init__(self, nCells, worldSize, deterministic=False): # todo : rm pixels from here
         self.numberOfCells = nCells
         self.world_size = worldSize # pixels
         self.map = Map(self.numberOfCells, self.world_size) # needed only for visualization
@@ -55,11 +56,14 @@ class Environment:
 
         # the state really
         self._cellType = np.empty([self.numberOfCells, self.numberOfCells], dtype=int)
-        # env must be reset before used - otherwise the cells are empty - shape is ok though
+        # env must be reset before used
 
+        self._emptyCells= set()
         self.done = False
-
         self.fruits_eaten = 0
+
+        if deterministic:
+            random.seed(0)
 
     def __getitem__(self, indices):
         return self._cellType[indices]
@@ -80,7 +84,15 @@ class Environment:
         return self._cellType.shape
     #must have property action size
 
-    def reset(self, head_position, food_position):
+    def get_empty_cells(self):
+        self._emptyCells = {
+            (i, j)
+            for j in range(self.numberOfCells)
+            for i in range(self.numberOfCells)
+            if self[i, j] == CellType.EMPTY
+        }
+
+    def reset(self, head_position, food_position=None):
 
         # setup the snake at its starting position
         self.snake = Snake(head_position) # initializing a snake here? sure
@@ -90,9 +102,6 @@ class Environment:
 
         # put empty cells
         self._cellType[:] = CellType.EMPTY
-
-        # food
-        self._cellType[food_position] = CellType.FOOD
 
         # quick & dirty body setup
         self._cellType[5, 5] = CellType.BODY
@@ -107,9 +116,16 @@ class Environment:
 
         # put head
         self._cellType[head_position[0], head_position[1]] = CellType.HEAD
+
+        self.get_empty_cells()
+        assert(len(self._emptyCells) == 61)
+
+        # food
+        self.regenerate_food(food_position)
+        assert(len(self._emptyCells) == 60)
+
         return self._cellType
         # todo: _cellType maybe should be called cellState
-
 
     def step(self, action, food_regeneration=True, food_position=None): # keyword args here a quick fix for testing
 
@@ -119,26 +135,38 @@ class Environment:
 
         reward = 0
         if not self[new_head_position] == CellType.FOOD:
-            # in all other cases erase tail, which means moving forward
+            # possible cases: empty, died, old tail. In all three, we erase the tail.
             previous_tail = self.snake.tail
             self.snake.erase_tail()
             self[previous_tail] = CellType.EMPTY
 
+            # note the new empty cell
+            self._emptyCells.add(previous_tail)
+
+            # cases: empty, died (old tail has been erased, so empty)
             if self.has_hit_wall(new_head_position) or self.has_hit_own_body(new_head_position):
                 self.done = True
                 #print('DIED')
                 reward = -1
+            else:
+                # only if head steps into an empty cell we must update the set
+                self._emptyCells.remove(new_head_position)
         else:
             self.fruits_eaten += 1
             reward = self.snake.size
             if food_regeneration: # for testing, keep it?
-                self.regenerate_food() # we cannot regenerate on the snake
+                self.regenerate_food()
             if food_position is not None:
                 self.regenerate_food(food_position)
 
-        # update the state for head and body
+
+        # update the state for head and body -- that is when got food, or gone to empty (incl. stepped onto old tail)
+        #if not (self.has_hit_wall(new_head_position) or self.has_hit_own_body(new_head_position)):
         self[previous_head] = CellType.BODY
         self[new_head_position] = CellType.HEAD # only after we have checked for empty space or food
+
+        # thus, when died, the tail has been erased - head has not moved
+        # do we update the head?
 
         return (self._cellType, reward, self.done)
 
@@ -152,14 +180,10 @@ class Environment:
             return self.current_direction
 
     def regenerate_food(self, position=None):
-        if position is not None:
-            self._cellType[position] = CellType.FOOD # limiting on 2 fruits for debuging
-        else:
-            ri, rj = self.snake.head
-            while self.snake.lies_on_position((ri, rj)):
-                ri = random.randrange(1, self.numberOfCells - 1) # account for walls
-                rj = random.randrange(1, self.numberOfCells - 1)
-            self._cellType[ri][rj] = CellType.FOOD
+        if position is None:
+            position = random.choice(list(self._emptyCells))
+        self._cellType[position] = CellType.FOOD
+        self._emptyCells.remove(position)
 
     def has_hit_wall(self, head_position):
         return True if self._cellType[head_position] == CellType.WALL else False

@@ -15,7 +15,7 @@ def train_snake():
     env = Environment(numberOfCells, worldSize=0)
     state_size = env.state_size #(numberOfCells x numberOfCells) # todo: not great that the state size is taken form the environment. It should be given somewhat more generically to the agent and the env.
     action_size = Actions.action_size # 3
-    agent = DQNAgent(state_size=state_size, action_size=action_size, batch_size=64, memory_limit=2000)
+    agent = DQNAgent(state_size=state_size, action_size=action_size, batch_size=3, memory_limit=2000)
 
     episodes = 4
     decay = 0.9 / episodes * 2 # changes epsilon : explore vs exploit
@@ -28,7 +28,7 @@ def train_snake():
 
         for e in range(episodes):
 
-            state = env.reset(startingPosition, foodPosition)
+            state = env.reset(startingPosition)
             #print('state array reset: \n', state)
 
             agent.reset_convolutional_layers()
@@ -41,7 +41,6 @@ def train_snake():
 
             #for step in range(maxsteps):
             while not done:
-                #print('--- step: ', step)
 
                 # state in this level is just a 2D array
                 action = agent.get_action(full_state)
@@ -52,7 +51,7 @@ def train_snake():
                 # step to the next state
                 next_state, reward, done = env.step(action)
 
-                #print('state array after step ', step, ' : \n', next_state)
+                #print('state array after step ', steps, ' : \n', next_state)
                 #print('reward returned: ', reward)
                 #print('next state: ', next_state)
 
