@@ -21,7 +21,7 @@ class TrainedAgent():
         self.model = self._load_model()
         self.numberOfLayers = 4 # todo: avoid hardcoded
         self.layers = None
-    
+
     # todo: free function?
     def _get_convolutional_layers(self, state):
         layer = np.copy(state)
@@ -71,23 +71,19 @@ class Viewer(tk.Tk):
                 color = Colors.CELLTYPE[cellType]
                 self._canvas.create_rectangle(cell.x, cell.y, cell.x + self.envMap.edge, cell.y + self.envMap.edge, fill=color, outline='')
 
-
-    def cb(self):
-        
-        if not self.game_over:
-            state = self.env.state
-            action = self.agent.choose_action(state)
-            _, _, self.game_over = self.env.step(action)
-            self.render()
-        self.after(1000, self.cb)
-   
-    def run(self):
-
-        self.game_over = False
-        step = 0
+    def draw_frame(self):
+        state = self.env.state
+        action = self.agent.choose_action(state)
+        _, _, self.game_over = self.env.step(action)
         self.render()
 
-        self.after(10, self.cb)
+        if not self.game_over:
+            self.after(1000, self.draw_frame)
+
+    def run(self):
+        self.game_over = False
+        self.render()
+        self.after(1000, self.draw_frame) # after: delay after initial state
         self.mainloop()
 
 

@@ -38,7 +38,7 @@ class Map():
 
     def __getitem__(self, indices):
         i, j = indices
-        return self.map[i, j]
+        return self.map[j, i] # [row, col]
 
     @property
     def size(self):
