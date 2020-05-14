@@ -12,7 +12,7 @@ class Colors:
         CellType.BODY : 'blue',
         CellType.EMPTY : 'white',
         CellType.FOOD : 'red',
-        CellType.WALL : 'brown'
+        CellType.WALL : 'black'
     }
 
 class TrainedAgent():
@@ -44,7 +44,7 @@ class TrainedAgent():
         return np.argmax(Q_function[0])
 
 
-class Viewer(tk.Tk):
+class Runner(tk.Tk):
 
     def __init__(self, env, agent, pixels):
         super().__init__()
@@ -71,31 +71,32 @@ class Viewer(tk.Tk):
                 color = Colors.CELLTYPE[cellType]
                 self._canvas.create_rectangle(cell.x, cell.y, cell.x + self.envMap.edge, cell.y + self.envMap.edge, fill=color, outline='')
 
-    def draw_frame(self):
+    def get_next_move(self):
         state = self.env.state
+        # predict
         action = self.agent.choose_action(state)
         _, _, self.game_over = self.env.step(action)
         self.render()
 
         if not self.game_over:
-            self.after(1000, self.draw_frame)
+            self.after(200, self.get_next_move)
 
     def run(self):
         self.game_over = False
         self.render()
-        self.after(1000, self.draw_frame) # after: delay after initial state
+        self.after(200, self.get_next_move) # after: delay after initial state
         self.mainloop()
 
 
 def main():
     numberOfCells = 10 # in each axis
     startingPosition = (4, 5) # head
-    foodPosition = (3, 6)
+    #foodPosition = (3, 6)
     agent = TrainedAgent() # todo: pass model
     env = Environment(numberOfCells, worldSize=800)
-    state = env.reset(startingPosition, foodPosition)
-    viewer = Viewer(env, agent, 800)
-    viewer.run()
+    state = env.reset(startingPosition)
+    runner = Runner(env, agent, 800)
+    runner.run()
 
 
 if __name__ == "__main__":
