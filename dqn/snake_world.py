@@ -1,6 +1,6 @@
 import numpy as np
 import random
-from dqnsnake.agent.snake import Snake, Directions
+from dqn.snake import Snake, Directions
 
 
 class CellType():

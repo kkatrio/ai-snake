@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from dqnsnake.agent.snake_world import Environment, Actions
-from dqnsnake.agent.dqnsnake import DQNAgent
+from dqn.snake_world import Environment, Actions
+from dqn.agent import DQNAgent
 import matplotlib.pyplot as plt
 
 
@@ -18,7 +18,7 @@ def train_snake():
     action_size = Actions.action_size # 3
     agent = DQNAgent(state_size=state_size, action_size=action_size, batch_size=3, memory_limit=2000)
 
-    episodes = 4
+    episodes = 3
     decay = 0.9 / episodes * 2 # changes epsilon : explore vs exploit
 
     epochs = []

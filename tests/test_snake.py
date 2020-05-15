@@ -1,5 +1,5 @@
-from dqnsnake.agent.dqnsnake import DQNAgent
-from dqnsnake.agent.snake_world import Environment, Actions
+from dqn.agent import DQNAgent
+from dqn.snake_world import Environment, Actions
 
 
 def test_walk():

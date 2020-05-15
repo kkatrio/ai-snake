@@ -3,7 +3,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 import numpy as np
-from dqnsnake.agent.snake_world import Directions
+from dqn.snake_world import Directions
 import random
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -140,12 +140,10 @@ class DQNAgent():
         #print('Qnext: ', Q_function_next)
 
         targets = rewards + self.gamma * (1 - done_flags) * np.amax(Q_function_next, axis=1)
-        assert(targets.shape == (batch_size, ))
+        #assert(targets.shape == (batch_size, ))
 
         Q_function[np.arange(batch_size), actions] = targets
-        assert(Q_function.shape == (batch_size, 3))
+        #assert(Q_function.shape == (batch_size, 3))
 
         loss = float(self.model.train_on_batch(states, Q_function))
         return loss
-
-

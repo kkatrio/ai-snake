@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 from tensorflow import keras
-from dqnsnake.agent.dqnsnake import DQNAgent
-from dqnsnake.agent.snake_world import Environment, CellType
+from dqn.agent import DQNAgent
+from dqn.snake_world import Environment, CellType
 import numpy as np
 from collections import deque
 import argparse
