@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from dqnsnake.agent.snake_world import Environment, Actions
 from dqnsnake.agent.dqnsnake import DQNAgent
 import matplotlib.pyplot as plt
@@ -5,14 +7,13 @@ import matplotlib.pyplot as plt
 
 def train_snake():
 
+    # todo: put all these parameters in a configuration file
     numberOfCells = 10 # in each axis
     startingPosition = (4, 5) # head
     foodPosition = (3, 6)
     max_steps_allowed = 1000
 
-    #worldSize = 800 # only for visualization
-
-    env = Environment(numberOfCells, worldSize=0)
+    env = Environment(numberOfCells)
     state_size = env.state_size #(numberOfCells x numberOfCells) # todo: not great that the state size is taken form the environment. It should be given somewhat more generically to the agent and the env.
     action_size = Actions.action_size # 3
     agent = DQNAgent(state_size=state_size, action_size=action_size, batch_size=3, memory_limit=2000)

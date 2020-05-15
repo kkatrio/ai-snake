@@ -47,14 +47,15 @@ class Map():
 
 
 class Environment:
-    def __init__(self, nCells, worldSize, deterministic=False): # todo : rm pixels from here
+    def __init__(self, nCells, worldSize=None, deterministic=False):
         self.numberOfCells = nCells
-        self.world_size = worldSize # pixels
-        self.map = Map(self.numberOfCells, self.world_size) # needed only for visualization
         self.snake = None
         self.current_direction = 0 # North
+        if worldSize:
+            self.map = Map(self.numberOfCells, worldSize) # needed only for visualization
+            self.world_size = worldSize
 
-        # the state really
+        # the state
         self._cellType = np.empty([self.numberOfCells, self.numberOfCells], dtype=int)
         # env must be reset before used
 
@@ -127,7 +128,7 @@ class Environment:
         return self._cellType
         # todo: _cellType maybe should be called cellState
 
-    def step(self, action, food_regeneration=True, food_position=None): # keyword args here a quick fix for testing
+    def step(self, action, food_position=None): # keyword args here a quick fix for testing
 
         previous_head = self.snake.head
         self.current_direction = self.turn(action)
@@ -135,7 +136,7 @@ class Environment:
 
         reward = 0
         if not self[new_head_position] == CellType.FOOD:
-            # possible cases: empty, died, old tail. In all three, we erase the tail.
+            # possible cases: empty, died, stepping on old tail. In all three, we erase the tail.
             previous_tail = self.snake.tail
             self.snake.erase_tail()
             self[previous_tail] = CellType.EMPTY
@@ -143,7 +144,7 @@ class Environment:
             # note the new empty cell
             self._emptyCells.add(previous_tail)
 
-            # cases: empty, died (old tail has been erased, so empty)
+            # cases: empty, died (old tail has been erased, so it is empty now)
             if self.has_hit_wall(new_head_position) or self.has_hit_own_body(new_head_position):
                 self.done = True
                 #print('DIED')
@@ -154,20 +155,15 @@ class Environment:
         else:
             self.fruits_eaten += 1
             reward = self.snake.size
-            if food_regeneration: # for testing, keep it?
-                self.regenerate_food()
             if food_position is not None:
                 self.regenerate_food(food_position)
+            else:
+                self.regenerate_food()
 
-
-        # update the state for head and body -- that is when got food, or gone to empty (incl. stepped onto old tail)
-        #if not (self.has_hit_wall(new_head_position) or self.has_hit_own_body(new_head_position)):
+        # update the state for head and body
+        # in case we die, we crash, i.e. head moves onto a wall or body
         self[previous_head] = CellType.BODY
         self[new_head_position] = CellType.HEAD # only after we have checked for empty space or food
-
-        # thus, when died, the tail has been erased - head has not moved
-        # do we update the head?
-
         return (self._cellType, reward, self.done)
 
     def turn(self, action):

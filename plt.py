@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
@@ -14,6 +16,7 @@ loss = data[:, 2]
 rewards = data[:, 3]
 fruits = data[:, 4]
 
+# todo: loop?
 f1 = plt.figure('loss -- '+args.filename)
 ax1 = plt.gca()
 sc1, = ax1.plot(epochs, loss)

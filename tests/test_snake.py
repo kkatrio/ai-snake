@@ -7,7 +7,7 @@ def test_walk():
     startingPosition = (4, 5)
     foodPosition = (3, 6)
 
-    env = Environment(numberOfCells, worldSize=0)
+    env = Environment(numberOfCells)
     env.reset(startingPosition, foodPosition)
 
     debug_actions = [0, 1, 2, 2, 2, 1, 1, 2, 2, 0, 1, 2, 2, 0, 1, 1, 0, 0]
@@ -34,7 +34,7 @@ def test_smoke():
     startingPosition = (4, 5) # head
     foodPosition = (3, 6)
 
-    env = Environment(numberOfCells, worldSize=0)
+    env = Environment(numberOfCells)
     agent = DQNAgent(state_size=env.state_size, action_size=Actions.action_size, deterministic=True, batch_size=24, memory_limit=2000) # todo: tf summary
     state = env.reset(startingPosition, foodPosition)
     agent.reset_convolutional_layers()
@@ -44,7 +44,7 @@ def test_smoke():
 
     for step in range(maxsteps):
         action = agent.get_exploration_action()
-        next_state, reward, done = env.step(action, food_regeneration=False, food_position=(1, 1))
+        next_state, reward, done = env.step(action, food_position=(1, 1))
         full_next_state = agent.get_convolutional_layers(next_state)
         assert(full_next_state.shape == (1, numberOfCells, numberOfCells, agent.numberOfLayers))
         agent.save_transition(full_state, action, reward, full_next_state, done)
@@ -73,7 +73,7 @@ def test_single_training():
     startingPosition = (4, 5) # head
     foodPosition = (3, 6)
 
-    env = Environment(numberOfCells, worldSize=0, deterministic=True)
+    env = Environment(numberOfCells, deterministic=True)
     agent = DQNAgent(state_size=env.state_size, action_size=Actions.action_size, deterministic=True, batch_size=24, memory_limit=2000)
     state = env.reset(startingPosition, foodPosition)
     agent.reset_convolutional_layers()
@@ -85,7 +85,7 @@ def test_single_training():
 
     for step in range(maxsteps):
         action = agent.get_exploration_action()
-        next_state, reward, done = env.step(action, food_regeneration=False, food_position=(1, 1))
+        next_state, reward, done = env.step(action, food_position=(1, 1))
         assert(not done)
         full_next_state = agent.get_convolutional_layers(next_state)
         assert(full_next_state.shape == (1, numberOfCells, numberOfCells, agent.numberOfLayers))
@@ -106,7 +106,7 @@ def test_multiepisode_training():
     startingPosition = (4, 5) # head
     foodPosition = (3, 6)
 
-    env = Environment(numberOfCells, worldSize=0, deterministic=True)
+    env = Environment(numberOfCells, deterministic=True)
     state_size = env.state_size
     action_size = Actions.action_size # 3
     agent = DQNAgent(state_size=state_size, action_size=action_size, deterministic=True, batch_size=24, memory_limit=2000)
@@ -126,7 +126,7 @@ def test_multiepisode_training():
 
         for step in range(maxsteps):
             action = agent.get_exploration_action()
-            next_state, reward, done = env.step(action, food_regeneration=False, food_position=(1, 1)) # generation on (1, 1) happens once over the test
+            next_state, reward, done = env.step(action, food_position=(1, 1)) # generation on (1, 1) happens once over the test
             full_next_state = agent.get_convolutional_layers(next_state)
             assert(full_next_state.shape == (1, numberOfCells, numberOfCells, agent.numberOfLayers))
             agent.save_transition(full_state, action, reward, full_next_state, done)
@@ -153,7 +153,7 @@ def test_food_regeneration():
     startingPosition = (4, 5) # head
     foodPosition = (3, 6)
 
-    env = Environment(numberOfCells, worldSize=0)
+    env = Environment(numberOfCells)
     state = env.reset(startingPosition, foodPosition)
     env.regenerate_food((8, 8))
     assert(env[(8, 8)] == 1)

@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
+
 from tensorflow import keras
 from dqnsnake.agent.dqnsnake import DQNAgent
 from dqnsnake.agent.snake_world import Environment, CellType
 import numpy as np
 from collections import deque
+import argparse
 import tkinter as tk
 
 
@@ -17,7 +20,8 @@ class Colors:
 
 class TrainedAgent():
 
-    def __init__(self):
+    def __init__(self, model_dir_name):
+        self.trained_model = model_dir_name
         self.model = self._load_model()
         self.numberOfLayers = 4 # todo: avoid hardcoded
         self.layers = None
@@ -36,23 +40,22 @@ class TrainedAgent():
         return rolled
 
     def _load_model(self):
-        return keras.models.load_model('trained_snake.model')
+        return keras.models.load_model(self.trained_model)
 
     def choose_action(self, state):
         state = self._get_convolutional_layers(state)
         Q_function = self.model.predict(state)
         return np.argmax(Q_function[0])
 
-
 class Runner(tk.Tk):
 
-    def __init__(self, env, agent, pixels):
+    def __init__(self, env, agent):
         super().__init__()
 
         self.env = env # to get the cell type from
-        self.envMap = env.get_map # coords (array of Points)
+        self.env_map = env.get_map # coords (array of Points)
         self.agent = agent
-        self.canvas_size = pixels
+        self.canvas_size = env.world_size
         self._init_canvas()
 
     def _init_canvas(self):
@@ -64,12 +67,12 @@ class Runner(tk.Tk):
         self._canvas.pack()
 
     def render(self):
-        for i in range(self.envMap.size):
-            for j in range(self.envMap.size):
-                cell = self.envMap[(i, j)]
+        for i in range(self.env_map.size):
+            for j in range(self.env_map.size):
+                cell = self.env_map[(i, j)]
                 cellType = self.env[(i, j)]
                 color = Colors.CELLTYPE[cellType]
-                self._canvas.create_rectangle(cell.x, cell.y, cell.x + self.envMap.edge, cell.y + self.envMap.edge, fill=color, outline='')
+                self._canvas.create_rectangle(cell.x, cell.y, cell.x + self.env_map.edge, cell.y + self.env_map.edge, fill=color, outline='')
 
     def get_next_move(self):
         state = self.env.state
@@ -89,13 +92,18 @@ class Runner(tk.Tk):
 
 
 def main():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('modelname')
+    args = parser.parse_args()
+
     numberOfCells = 10 # in each axis
     startingPosition = (4, 5) # head
     #foodPosition = (3, 6)
-    agent = TrainedAgent() # todo: pass model
+    agent = TrainedAgent(args.modelname) # todo: pass model
     env = Environment(numberOfCells, worldSize=800)
     state = env.reset(startingPosition)
-    runner = Runner(env, agent, 800)
+    runner = Runner(env, agent)
     runner.run()
 
 
