@@ -18,6 +18,15 @@ class Colors:
         CellType.WALL : 'black'
     }
 
+class Outline:
+    CELLTYPE = {
+        CellType.HEAD : 'cyan',
+        CellType.BODY : 'grey',
+        CellType.EMPTY : 'white',
+        CellType.FOOD : 'orange',
+        CellType.WALL : 'black'
+    }
+
 class TrainedAgent():
 
     def __init__(self, model_dir_name):
@@ -57,6 +66,7 @@ class Runner(tk.Tk):
         self.agent = agent
         self.canvas_size = env.world_size
         self._init_canvas()
+        self.geometry("400x400+1800+300") # screen pixels
 
     def _init_canvas(self):
         self._canvas = tk.Canvas(self,
@@ -72,13 +82,17 @@ class Runner(tk.Tk):
                 cell = self.env_map[(i, j)]
                 cellType = self.env[(i, j)]
                 color = Colors.CELLTYPE[cellType]
-                self._canvas.create_rectangle(cell.x, cell.y, cell.x + self.env_map.edge, cell.y + self.env_map.edge, fill=color, outline='')
+                outline = Outline.CELLTYPE[cellType]
+                self._canvas.create_rectangle(cell.x, cell.y, cell.x + self.env_map.edge, cell.y + self.env_map.edge, fill=color, outline=outline)
 
     def get_next_move(self):
         state = self.env.state
         # predict
         action = self.agent.choose_action(state)
         _, _, self.game_over = self.env.step(action)
+        score = self.env.snake.size
+        title = 'score: ' + str(score - 3) # initial length
+        self.title(title)
         self.render()
 
         if not self.game_over:
@@ -87,7 +101,7 @@ class Runner(tk.Tk):
     def run(self):
         self.game_over = False
         self.render()
-        self.after(200, self.get_next_move) # after: delay after initial state
+        self.after(4000, self.get_next_move) # delay after initial state
         self.mainloop()
 
 
@@ -101,7 +115,7 @@ def main():
     startingPosition = (4, 5) # head
     #foodPosition = (3, 6)
     agent = TrainedAgent(args.modelname) # todo: pass model
-    env = Environment(numberOfCells, worldSize=800)
+    env = Environment(numberOfCells, worldSize=400)
     state = env.reset(startingPosition)
     runner = Runner(env, agent)
     runner.run()

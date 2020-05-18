@@ -59,7 +59,7 @@ class Environment:
         self._cellType = np.empty([self.numberOfCells, self.numberOfCells], dtype=int)
         # env must be reset before used
 
-        self._emptyCells= set()
+        self._emptyCells = set()
         self.done = False
         self.fruits_eaten = 0
 
