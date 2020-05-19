@@ -9,12 +9,12 @@ import random
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 class DQNAgent():
-    def __init__(self, state_size, action_size, deterministic=False, batch_size=64, memory_limit=2000):
+    def __init__(self, state_size, action_size, deterministic=False, batch_size=64, memory_limit=2000, number_of_channels=4):
         self.state_size = state_size
         self.action_size = action_size
         self.experience = deque(maxlen=memory_limit)
         self.layers = None # convolutional layers
-        self.numberOfLayers = 4
+        self.numberOfLayers = number_of_channels
         self.batch_size = batch_size
         self.epsilon = 1 # explore probability
         self.gamma = 0.95 # discount factor
@@ -30,7 +30,6 @@ class DQNAgent():
 
         self.model = self.build_network()
 
-
     def build_network(self):
         model = tf.keras.Sequential()
         model.add(layers.Conv2D(
@@ -38,7 +37,7 @@ class DQNAgent():
             kernel_size=(3, 3),
             strides=(1, 1),
             # channels last
-            input_shape = self.state_size + (self.numberOfLayers, ) # input_shape
+            input_shape = self.state_size + (self.numberOfLayers, )
         ))
         model.add(layers.Activation('relu'))
         model.add(layers.Conv2D(
@@ -70,20 +69,10 @@ class DQNAgent():
             self.layers.append(layer)
             self.layers.popleft()
 
-        full_state = np.expand_dims(self.layers, 0) # make it 4d : (1,H,W,C)
+        full_state = np.expand_dims(self.layers, 0) # make it 4d : (1,C,H,W)
         #print('full state: ', full_state)
-        rolled = np.rollaxis(full_state, 1, 4)
+        rolled = np.rollaxis(full_state, 1, 4) # make it channels last: (1,H,W,C)
         return rolled
-
-
-    def quick_save(self, state):
-        #memory_item = state.flatten()
-        self.experience.append(state)
-
-    @property
-    def print_memory(self):
-        #print('memory: \n:', self.experience[len(self.experience) - 1] - self.experience[0])
-        print('memory: \n:', self.experience)
 
     def save_transition(self, state, action, reward, next_state, done):
         self.experience.append((state, action, reward, next_state, done))
@@ -99,11 +88,10 @@ class DQNAgent():
 
         #print('exploiting...')
         q_function = self.model.predict(state) # q-value function
-        #print('q_function in get_action: ', q_function)
         return np.argmax(q_function[0])
 
     def train(self):
-        # extract
+
         batch_size = min(len(self.experience), self.batch_size)
         #print('batch_size: ', batch_size)
 
@@ -116,15 +104,12 @@ class DQNAgent():
         #for i in batch_experience:
         #    print('experience element: \n', i)
 
-        input_dim = np.prod(self.input_shape)
-
         # Extract [S, a, r, S', end] from experience.
         states = np.zeros((batch_size, ) + self.input_shape, dtype=int)
         next_states = np.zeros((batch_size, ) + self.input_shape, dtype=int)
         for i in range(batch_size):
             states[i] = batch_experience[i, 0]
             next_states[i] = batch_experience[i, 3]
-
         actions = batch_experience[:, 1]
         rewards = batch_experience[:, 2]
         done_flags = batch_experience[:, 4]

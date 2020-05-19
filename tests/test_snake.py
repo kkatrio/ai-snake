@@ -29,13 +29,14 @@ def test_walk():
     assert(done)
 
 def test_smoke():
+    # just runs the code - no assetions
 
     numberOfCells = 10 # in each axis
     startingPosition = (4, 5) # head
     foodPosition = (3, 6)
 
     env = Environment(numberOfCells)
-    agent = DQNAgent(state_size=env.state_size, action_size=Actions.action_size, deterministic=True, batch_size=24, memory_limit=2000) # todo: tf summary
+    agent = DQNAgent(state_size=env.state_size, action_size=Actions.action_size, deterministic=True, batch_size=24, memory_limit=2000)
     state = env.reset(startingPosition, foodPosition)
     agent.reset_convolutional_layers()
     full_state = agent.get_convolutional_layers(state)
@@ -58,14 +59,7 @@ def test_smoke():
 
     loss2 = current_loss
     action2 = action
-
-    # todo: udpate assertion values after changed tf inputs -> different randomness
     #assert(False)
-    #assert(loss30 == 0.009624761529266834) # is this accurate really?
-    #assert(loss50 == 0.002301788656041026)
-    #assert(action30 == 1)
-    #assert(action50 == 0)
-
 
 def test_single_training():
 
@@ -96,7 +90,6 @@ def test_single_training():
     loss10 = current_loss
     action10 = action
 
-    #assert(loss10 == 0.006666696164757013)
     assert(loss10 == 0.006804642267525196)
     assert(action10 == 0)
 
@@ -138,10 +131,6 @@ def test_multiepisode_training():
 
         losses[e] = loss
 
-    #assert(losses[0] == 3.9530042931437492)
-    #assert(losses[1] == 0.044061796041205525) # hmmm
-    #assert(losses[2] == 0.1294256257242523)
-    #assert(losses[3] == 2.783756474032998)
     assert(losses[0] == 3.9618697417899966)
     assert(losses[1] == 0.044194952584803104)
     assert(losses[2] == 0.1333141174982302)
@@ -160,7 +149,7 @@ def test_food_regeneration():
 
     for i in range(59): # plus the (8, 8) = 60
         env.regenerate_food()
-    print(env._cellType)
+    print(env._cells)
     assert(env[startingPosition] == 2)
     assert(env[(5, 5)] == 3)
     assert(env[(6, 5)] == 3)

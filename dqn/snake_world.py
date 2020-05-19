@@ -56,7 +56,7 @@ class Environment:
             self.world_size = worldSize
 
         # the state
-        self._cellType = np.empty([self.numberOfCells, self.numberOfCells], dtype=int)
+        self._cells = np.empty([self.numberOfCells, self.numberOfCells], dtype=int)
         # env must be reset before used
 
         self._emptyCells = set()
@@ -67,10 +67,10 @@ class Environment:
             random.seed(0)
 
     def __getitem__(self, indices):
-        return self._cellType[indices]
+        return self._cells[indices]
 
     def __setitem__(self, indices, cell_type):
-        self._cellType[indices] = cell_type
+        self._cells[indices] = cell_type
 
     @property
     def get_map(self):
@@ -78,11 +78,11 @@ class Environment:
 
     @property
     def state(self):
-        return self._cellType
+        return self._cells
 
     @property
     def state_size(self):
-        return self._cellType.shape
+        return self._cells.shape
     #must have property action size
 
     def get_empty_cells(self):
@@ -102,21 +102,21 @@ class Environment:
         self.fruits_eaten = 0
 
         # put empty cells
-        self._cellType[:] = CellType.EMPTY
+        self._cells[:] = CellType.EMPTY
 
         # quick & dirty body setup
-        self._cellType[5, 5] = CellType.BODY
-        self._cellType[6, 5] = CellType.BODY
+        self._cells[5, 5] = CellType.BODY
+        self._cells[6, 5] = CellType.BODY
         # don't forget to put the body onto the actual snake too
         self.snake.append_body((5, 5))
         self.snake.append_body((6, 5))
 
         # quickly put the walls
-        self._cellType[[0, -1], :] = CellType.WALL
-        self._cellType[:, [0, -1]] = CellType.WALL
+        self._cells[[0, -1], :] = CellType.WALL
+        self._cells[:, [0, -1]] = CellType.WALL
 
         # put head
-        self._cellType[head_position[0], head_position[1]] = CellType.HEAD
+        self._cells[head_position[0], head_position[1]] = CellType.HEAD
 
         self.get_empty_cells()
         assert(len(self._emptyCells) == 61)
@@ -125,10 +125,10 @@ class Environment:
         self.regenerate_food(food_position)
         assert(len(self._emptyCells) == 60)
 
-        return self._cellType
-        # todo: _cellType maybe should be called cellState
+        return self._cells
+        # todo: cellType maybe should be called cellState
 
-    def step(self, action, food_position=None): # keyword args here a quick fix for testing
+    def step(self, action, food_position=None):
 
         previous_head = self.snake.head
         self.current_direction = self.turn(action)
@@ -164,7 +164,7 @@ class Environment:
         # in case we die, we crash, i.e. head moves onto a wall or body
         self[previous_head] = CellType.BODY
         self[new_head_position] = CellType.HEAD # only after we have checked for empty space or food
-        return (self._cellType, reward, self.done)
+        return (self._cells, reward, self.done)
 
     def turn(self, action):
         dindex = AllDirections.index(self.current_direction)
@@ -178,11 +178,11 @@ class Environment:
     def regenerate_food(self, position=None):
         if position is None:
             position = random.choice(list(self._emptyCells))
-        self._cellType[position] = CellType.FOOD
+        self._cells[position] = CellType.FOOD
         self._emptyCells.remove(position)
 
     def has_hit_wall(self, head_position):
-        return True if self._cellType[head_position] == CellType.WALL else False
+        return True if self._cells[head_position] == CellType.WALL else False
 
     def has_hit_own_body(self, head_position):
-        return self._cellType[head_position] == CellType.BODY
+        return self._cells[head_position] == CellType.BODY

@@ -32,7 +32,7 @@ class TrainedAgent():
     def __init__(self, model_dir_name):
         self.trained_model = model_dir_name
         self.model = self._load_model()
-        self.numberOfLayers = 4 # todo: avoid hardcoded
+        self.numberOfLayers = self.model.input_shape[3]
         self.layers = None
 
     # todo: free function?
